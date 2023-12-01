@@ -155,18 +155,28 @@ COMPONENT_INIT
     // le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_HIGH, true);
     // LE_INFO("Pin21 read PP - High: %d", le_gpioPin21_Read());
 
-    le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_LOW, true);
-    LE_INFO("Pin21 read PP - Low: %d", le_gpioPin21_Read());
+    // le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_LOW, true);
+    // LE_INFO("Pin21 read PP - Low: %d", le_gpioPin21_Read());
 
     // le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_HIGH, false);
     // LE_INFO("Pin21 read PP - High: %d", le_gpioPin21_Read());
 
-    le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_LOW, false);
-    LE_INFO("Pin21 read PP - Low: %d", le_gpioPin21_Read());
+    // le_gpioPin21_SetPushPullOutput(LE_GPIOPIN21_ACTIVE_LOW, false);
+    // LE_INFO("Pin21 read PP - Low: %d", le_gpioPin21_Read());
 
-    bool isout;
-    isout = le_gpioPin21_IsOutput();
-    LE_INFO("Is out: %d", isout ? 1 : 0);
+    // bool isout;
+    // isout = le_gpioPin21_IsOutput();
+    // LE_INFO("Is out: %d", isout ? 1 : 0);
+
+    bool is_active;
+
+    le_gpioPin21_Activate();
+    is_active = le_gpioPin21_IsActive();
+    LE_INFO("Is active: %d", is_active);
+
+    is_active = le_gpioPin21_Deactivate();
+    LE_INFO("Is active: %d", is_active);
+
     return;
 }
 
