@@ -1,0 +1,27 @@
+start: manual
+
+requires:
+{
+    configTree:
+    {
+        [w] .
+    }
+}
+
+executables:
+{
+     testConfigTree = (testConfigTree)
+}
+
+bindings:
+{
+    testConfigTree.testConfigTree.le_cfg -> configTree.le_cfg
+}
+
+processes:
+{
+    run:
+    {
+        (testConfigTree)
+    }
+}

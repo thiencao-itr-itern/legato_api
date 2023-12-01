@@ -1,0 +1,27 @@
+start: manual
+
+executables:
+{
+    testWatchdog = ( watchdogComponent )
+}
+
+processes:
+{
+    run:
+    {
+        ( testWatchdog )
+    }
+
+    watchdogTimeout: 5000
+}
+
+bindings:
+{
+#if ${LE_CONFIG_LINUX} = y
+    testWatchdog.watchdogChain.le_wdog -> <root>.le_wdog
+#elif ${LE_CONFIG_RTOS} = y
+    #if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+    testWatchdog.watchdogChain.le_wdog -> watchdog.le_wdog
+    #endif
+#endif
+}

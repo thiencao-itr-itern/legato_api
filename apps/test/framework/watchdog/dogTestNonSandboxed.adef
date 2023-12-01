@@ -1,0 +1,25 @@
+start: manual
+
+watchdogTimeout: 5000
+watchdogAction: stop
+sandboxed: false
+
+executables:
+{
+    dogTest = (dogTest)
+}
+
+processes:
+{
+    run:
+    {
+        (dogTest 500 100)
+    }
+}
+
+#if ${LE_CONFIG_RTOS} = y
+bindings:
+{
+    dogTest.dogTest.le_wdog -> watchdog.le_wdog
+}
+#endif

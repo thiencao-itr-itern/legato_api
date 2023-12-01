@@ -1,0 +1,180 @@
+/** @page getStarted Get Started
+
+<b>Congratulations on taking the first step to developing applications and systems with the Legato
+Application Framework!</b>
+
+Completing this section will familiarize you with the Legato Application Framework workflow and
+prepare you to start developing for your target.
+
+Our tools and design patterns have been developed to make it easy to <b>set up your development
+environment; develop, customize and/or update a system and/or apps; build the Legato runtime for
+your target; and install the updates on the target.</b>
+
+@image html getStarted-Overview.png
+
+<h1> Setup Development Environment </h1>
+
+The first thing to do to get started is to install the Source Code, Tools and configure your
+environment to build the Legato Application Framework for your target.
+
+@ref confLeaf "Leaf is a workspace manager" that will take care of setting up your environment for
+you. It lists, downloads, installs and configures the software needed to start developing Legato
+Systems.
+
+The Legato team has also developed a @ref confVSCode "Legato Plugin" for VSCode that integrates Leaf
+and the other Legato tools into a graphical IDE to help you develop and use the Legato tools easily.
+
+Alternatively, you can @ref basicBuild "set up your development environment manually".
+
+| Installation           | Description                                                               |
+| ---------------------- | ------------------------------------------------------------------------- |
+| @subpage confLeaf      | Download, install, and setup, the Legato Application Framework using Leaf |
+| @subpage tools_vsCode  | Install and configure VSCode and the Legato Plugin                        |
+| @subpage basicBuild    | Manually install software and tools for the Legato Application Framework  |
+| @ref basicTarget       | Configure a Sierra Wireless Target                                        |
+| @ref raspbianMain      | Configure the Legato Application Framework for a Raspberry Pi             |
+
+<h1> Leaf Quick Start </h1>
+
+@ref confLeaf "Detailed Install and Usage Instructions"
+
+To install leaf download and setup our debian package from the Sierra Wireless tools repository:
+@verbatim
+$ wget https://downloads.sierrawireless.com/tools/leaf/leaf_latest.deb -O /tmp/leaf_latest.deb && sudo apt install /tmp/leaf_latest.deb
+$ mkdir ~/myWorkspace; cd ~/myWorkspace
+@endverbatim
+
+Search and install a package for your target (downloads and automatically installs Legato, the
+toolchain and tools):
+@verbatim
+$ leaf search -t <target>                          # search for all available SDKs for your target
+$ leaf setup -p <packageIdentifier> <profileName>  # download, install and sets up your environment
+@endverbatim
+
+List of supported targets (with default remote configuration):
+- @c wp750x - All wp75 family of modules
+- @c wp76xx - All wp76 family of modules
+- @c wp77xx - All wp77 family of modules
+- @c wp85   - All wp85 family of modules
+
+Start developing using the Leaf Shell to configure your environment:
+@verbatim
+$ leaf shell
+@endverbatim
+
+@note
+Use your myWorkspace directory to create your System, Apps and Components. The Legato Application
+Framework comes pre-built for your target so there is no need to run @c make unless you make changes
+to the framework itself. The $LEGATO_ROOT environment variable comes pre-configured into the
+environment and is @b profile @b aware, so you are able to reference or include Legato Systems,
+Platform Services and Apps in the Legato Application Framework by adding them to your own @c .sdef
+file using $LEGATO_ROOT in your path.
+
+<h1> Visual Studio Code Install </h1>
+
+The Legato Application Framework only builds on a Linux system.  Windows and Mac systems are only
+supported by using a Linux VM and installing the Legato Application Framework and Visual Studio Code
+on Linux.
+
+Step by step setup instructions are @ref tools_vsCodeInstall "included here".
+
+Download and install [Visual Studio Code](https://code.visualstudio.com/Download) for Linux.
+ - [Install Guide for VSCode](https://code.visualstudio.com/docs/)
+
+Install Leaf (if not already installed)
+@verbatim
+wget https://downloads.sierrawireless.com/tools/leaf/leaf_latest.deb -O /tmp/leaf_latest.deb && sudo apt install /tmp/leaf_latest.deb
+@endverbatim
+
+In the Microsoft marketplace search for @b Legato and install the plugin.
+
+Open a folder to use as your development workspace (Ctrl + K + 0)
+
+Use the @ref tools_vsCodeLeaf "Leaf Command Palate" to configure your development environment for
+your target and install the IDE support tools.
+
+@ref tools_vsCode "Start developing, building and installing your code on your target."
+
+<h1> Developer Mode App </h1>
+
+When your target gets shipped to you it may be set up for production use. A number of libraries and
+settings will be removed from the Framework and the underlying OS because of licensing or security
+concerns. The Dev Mode app bundles up those libraries and sets configuration and sets the target up
+for development.
+
+The @subpage basicTargetDevMode "developer mode" app, provides the following tools and settings
+specific for development:
+ - bundles @ref howToDebugGDB "gdbserver" executable for use on the target device, allowing
+   step-by-step debugging of Legato apps.
+  - sets the probation period of apps to 10 seconds, to prevent aggressive roll-back.
+ - holds a wake lock, so the target won't go to sleep when disconnected from USB.
+ - removes the boot count file on startup to disable the boot loop detection feature of Legato.
+ - sets firewall rules to allow more permissive network access.
+
+To install devMode on your target follow these @ref howToDevMode_installDev "install instructions".
+
+@note With the Visual Studio Code IDE, devMode gets automatically installed on your target
+when you use the debugging features.
+
+<h1> Migration Guide for New Release </h1>
+
+WP76 firmware Release 17 and WP77 firmware Release 15 include a major upgrade of the firmware
+running on the module.  Refer to @ref migrationGuide for more details.
+
+<h1> Build and Update Target </h1>
+
+When you are ready to update your target with the new software that you have created you need to
+combine it all into a system and then update your target with that system. While you can update
+each app on a target, it is recommended to build all of your apps together into a cohesive @b system.
+When your apps are combined and built into a system it validates inter-app dependencies and
+conflicts and will help you resolve binding issues at build time instead of at runtime.
+
+Build tools:
+- @ref buildToolsmksys - Build tool to build systems (groups of applications)
+- @ref buildToolsmkapp - Build tool to build singular apps
+
+@ref conceptsUpdates "Update/Install" tools:
+- @ref toolsTarget_update - updates the read/write overlay partition of targets over USB.
+- @ref toolsTarget_fwUpdate - updates the read only base partitions of targets over USB.
+- [swiflash](https://source.sierrawireless.com/resources/airprime/software/swiflash/) - recovery
+tool that flashes images to the target via USB.
+
+<h1> Tutorials </h1>
+
+Now you are ready to start developing apps and installing them on your target. We first recommend
+starting with our <b> @subpage getStartedApps</b>; they walk you through
+some of the basic concepts and <b> how to create, install and test </b> your first component and
+application.
+
+| Tutorial                 | Description                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| @ref getStartedSystems   | Create a system using a the default set of Platform Services and the helloWorld and helloIPC  apps        |
+| @ref getStartedKO        | Add an example driver to your system                                                                      |
+| @ref getStartedUpdate    | Update your target with your new system files                                                             |
+| @ref getStartedHW        | Create a "helloWorld" app and deploying it on a target                                                    |
+| @ref getStartedIPC       | Create two apps and use IPC to communicate between the apps                                               |
+
+<h1> Concepts and Conventions </h1>
+
+Once you are familiar with the basic flow of the Legato Application Framework, explore our
+documentation on our concepts and the programing conventions to create apps and systems with
+the Legato Application Framework.
+
+| Section                | Description                                                             |
+| ---------------------- | ----------------------------------------------------------------------- |
+| @ref defFiles          | Use Definition Files to build systems, Apps, components and drivers     |
+| @ref apiFiles          | Work with the API files to develop Apps                                 |
+| @ref ccodingStdsMain   | C Language Coding Standards                                             |
+
+<h1> Sample Apps and How To's </h1>
+
+Our @ref howToMain section contains useful articles to walk through some of our advance concepts
+and tools. There is also a repo of @ref sampleApps "Sample Apps" that provide demo apps
+and apps showing how to connect to and consume specific @ref apiGuidesMain "APIs".
+
+| Section                 | Description                                                            |
+| ----------------------- | ---------------------------------------------------------------------- |
+| @ref howToMain          | How To and Troubleshooting articles for common features                |
+| @subpage sampleApps     | Sample Applications                                                    |
+
+**/

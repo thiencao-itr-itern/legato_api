@@ -1,0 +1,18 @@
+sources:
+{
+    httpTest.c
+    defaultDerKey.c
+}
+
+requires:
+{
+    component:
+    {
+        $LEGATO_ROOT/components/httpClientLibrary
+    }
+}
+
+cflags:
+{
+    -I$LEGATO_ROOT/components/httpClientLibrary
+}

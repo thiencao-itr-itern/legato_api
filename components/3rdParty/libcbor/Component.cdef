@@ -1,0 +1,9 @@
+externalBuild:
+{
+    "mkdir -p ${LEGATO_BUILD}/3rdParty/lib ${LEGATO_BUILD}/3rdParty/inc/cbor"
+#if ${LE_CONFIG_LINUX} = y
+    "${CURDIR}/build.sh Linux"
+#else
+    "${CURDIR}/build.sh Generic"
+#endif
+}

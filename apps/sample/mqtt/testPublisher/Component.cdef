@@ -1,0 +1,17 @@
+
+sources:
+{
+    testPublisher.c
+}
+
+requires:
+{
+    api:
+    {
+        ${LEGATO_ROOT}/apps/platformServices/mqttClient/mqtt.api
+        modemServices/le_info.api
+        ${LEGATO_ROOT}/apps/sample/dataHub/io.api
+        ${LEGATO_ROOT}/apps/sample/dataHub/admin.api
+        ${LEGATO_ROOT}/apps/sample/dataHub/query.api
+    }
+}

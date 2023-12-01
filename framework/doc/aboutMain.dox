@@ -1,0 +1,11 @@
+/** @page aboutMain About
+
+| Section                            | Description                                               |
+| ---------------------------------- | --------------------------------------------------------- |
+| @subpage aboutLegato               | About Legato                                              |
+| @subpage aboutSupport              | About Long Term Support Releases(LTS) and Support Policy  |
+| @subpage aboutReleaseNotes         | Release Notes for the Legato Application Framework        |
+| @subpage aboutLicenses             | Legato and Open Source Licenses                           |
+| @subpage aboutLegatoContributing   | How to contribute to Legato open source project           |
+
+**/

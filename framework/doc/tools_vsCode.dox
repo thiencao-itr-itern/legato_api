@@ -1,0 +1,60 @@
+/** @page tools_vsCode Legato Plugin for VSCode
+
+The Legato team has been working hard on the next generation of an <b>Integrated Development
+Environment (IDE)</b> to develop Legato Systems, Apps and Components.
+
+We are proud to launch the Legato Plugin for Visual Studio Code.  The plugin provides simple to
+use tools hooked up to a well known IDE that incorporates the Legato workflows and convenient tools
+to let you develop and troubleshoot Legato.
+
+The Legato Plugin for VS Code puts <b>tools into your hands to ease the learning curve and provide a
+visual map</b> of how all the system pieces are put together for building the Legato runtime
+environment.
+
+We do value your feedback and want you to use the plugin. Report any issues in the
+[VSCode category](https://forum.legato.io/) of the forum.
+
+@section tools_vsCode_Features Features
+
+- Full integration with Leaf Workspace Manager - install and upgrade Legato and associated tools
+  that your target requires.
+- Legato System View - a logical view of your Legato system model with the ability to add and edit
+  existing systems.
+- Add new apps and components using templates that set up your system using Legato best practices.
+- Build your system and install on your target in one step.
+- Code completion for your C/C++ code with autocompletion for legato.h and the C/C++ standard
+  library.
+- Debugging with GDB support.
+- Support for adding, editing and removing components through the Legato System view.
+- Error correction and handling for both the definition files and APIs.
+
+| Section                         | Description                                                      |
+| ------------------------------- | ---------------------------------------------------------------- |
+| @subpage tools_vsCodeInstall    | Install vsCode and the Legato Plugin for Legato development      |
+| @subpage tools_vsCodeLeaf       | Learn how to use the Leaf Activity menu within the Legato Plugin |
+| @subpage tools_vsCodeSystem     | Learn how to use the Legato System View within Leaf              |
+| @subpage tools_vsCodeDefinition | Learn how to use the Definition menu within the Legato Plugin    |
+| @subpage tools_vsCodeTarget     | Learn how to use the Target menu with the Legato Plugin          |
+| @subpage tools_vsCodeMigrate    | Migrate Dev Studio Apps to Visual Studio Code                    |
+
+@section tools_vsCode_DevStudio Dev Studio?
+
+What does this mean for Developer Studio?
+
+Developer Studio is the previous IDE that was used to create and debug Legato systems. Developer
+Studio has served us well for the last 10 years but we couldn’t easily tie in the Developer Studio
+workflow with the Legato workflow in a consistent way that was easy to maintain for current and
+future features.
+
+Support for Developer Studio has ended and the Legato plugin for VSCode is now the currently
+supported IDE. Instructions for migrating your apps from Developer Studio to Visual Studio code are
+provided here: @ref tools_vsCodeMigrate
+
+@image html vsCode_devStudioTimeline.png
+
+Thank you for coming along on this journey with us to provide you an easy to use IDE that will help
+you configure and code your Legato Systems quicker, getting your product to market quicker.
+
+Copyright (C) Sierra Wireless Inc.
+
+**/

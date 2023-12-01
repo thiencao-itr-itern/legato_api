@@ -1,0 +1,23 @@
+sources:
+{
+    socketTest.c
+    defaultDerKey.c
+}
+
+requires:
+{
+    component:
+    {
+        $LEGATO_ROOT/components/socketLibrary
+    }
+}
+
+cflags:
+{
+#if ${BUILD_COMPILER} = "ARMCC"
+    --c99
+#else
+    -std=c99
+#endif
+    -I$LEGATO_ROOT/components/socketLibrary
+}

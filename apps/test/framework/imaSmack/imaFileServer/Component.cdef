@@ -1,0 +1,18 @@
+sources:
+{
+    server.c
+}
+
+provides:
+{
+    api:
+    {
+        filePasser = file.api
+    }
+}
+
+cflags:
+{
+    -I${LEGATO_ROOT}/framework/liblegato
+    -I${LEGATO_ROOT}/framework/liblegato/linux
+}

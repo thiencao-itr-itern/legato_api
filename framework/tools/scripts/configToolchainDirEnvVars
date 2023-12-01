@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Get setup for cross-building for Sierra Wireless AR and WP target devices by setting
+# the appropriate environment variables needed by the build system, so it knows where to find
+# the cross-build tool chain and what prefix is used in the names of the compilers, linkers, etc.
+
+# Disable colors if stdout is not a tty
+if [ -t 1 ]; then
+    COLOR_TITLE="\\033[1;94m"
+    COLOR_warn="\\033[0;93m"
+    COLOR_pass="\\033[0;32m"
+    COLOR_RESET="\\033[0m"
+fi
+
+set_toolchain_dir ()
+{
+    local target="$1"
+
+    local prefix toolchain_dir toolchain_err toolchain_prefix sysroot kernelroot
+
+    prefix="$(echo "$target" | tr '[:lower:]-' '[:upper:]_')"
+    local toolchain_dir_env_name="${prefix}_TOOLCHAIN_DIR"
+    local toolchain_prefix_env_name="${prefix}_TOOLCHAIN_PREFIX"
+    local sysroot_env_name="${prefix}_SYSROOT"
+    local kernelroot_env_name="${prefix}_KERNELROOT"
+
+    toolchain_dir=$(findtoolchain "$target" dir 2>/dev/null)
+    if [ -z "$toolchain_dir" ] || ! [ -e "$toolchain_dir" ]; then
+        toolchain_err=$(findtoolchain "$target" dir 2>&1)
+        if [ -n "$toolchain_err" ]; then
+            echo -e "${COLOR_TITLE}[${target}] ${COLOR_warn}${toolchain_err}${COLOR_RESET}"
+        fi
+        return 1
+    fi
+
+    toolchain_prefix=$(findtoolchain "$target" prefix)
+
+    sysroot=$(findtoolchain "$target" sysroot)
+    kernelroot=$(findtoolchain "$target" kernelroot)
+
+    eval "export ${toolchain_dir_env_name}=$toolchain_dir"
+    eval "export ${toolchain_prefix_env_name}=$toolchain_prefix"
+    eval "export ${sysroot_env_name}='$sysroot'"
+    eval "export ${kernelroot_env_name}='$kernelroot'"
+
+    local spacing spacing_len
+    spacing_len=$((${#target}+12))
+    spacing=$(printf " %.0s" {1..${spacing_len}})
+
+    echo -e "${COLOR_TITLE}[${target}] ${COLOR_pass}Toolchain dir = $toolchain_dir\n" \
+                                                   "${spacing}prefix = $toolchain_prefix\n" \
+                                                   "${spacing}sysroot = $sysroot\n" \
+                                                   "${spacing}kernelroot = $kernelroot${COLOR_RESET}"
+
+    return 0
+}
+
+declare -a TOOLCHAIN_TARGETS
+TOOLCHAIN_TARGETS+=(ar7 ar86)
+TOOLCHAIN_TARGETS+=(wp85 wp750x)
+TOOLCHAIN_TARGETS+=(wp76xx)
+TOOLCHAIN_TARGETS+=(wp77xx)
+TOOLCHAIN_TARGETS+=(ar758x)
+TOOLCHAIN_TARGETS+=(ar759x)
+TOOLCHAIN_TARGETS+=(virt-x86 virt-arm)
+
+for t in "${TOOLCHAIN_TARGETS[@]}"; do
+    set_toolchain_dir $t
+done
+

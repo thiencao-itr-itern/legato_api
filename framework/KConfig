@@ -1,0 +1,786 @@
+#
+# Configuration for Legato core framework.
+#
+# Copyright (C) Sierra Wireless Inc.
+#
+
+### Hidden Options ###
+
+config LINUX_TARGET_TOOLS
+  bool
+  depends on LINUX && BUILD_TARGET_TOOLS
+  default y
+  select MEM_POOL_STATS
+
+### Core Options ###
+
+config CUSTOM_FA
+  bool "Use custom framework adaptor (EXPERIMENTAL)"
+  depends on EXPERIMENTAL
+  default y if CUSTOM_OS
+  default n
+  ---help---
+  Customize the Legato framework adaptor for the target platform.
+
+config CUSTOM_FA_PATH
+  string "Path to custom OS adaptor sources directory"
+  depends on CUSTOM_FA
+  ---help---
+  Path of custom OS adaptor source directory relative to the legato/ root
+  directory.  This source directory should contain liblegato/ and include/
+  directories containing the source code needed to support the custom
+  operating system.
+
+config BUILD_TARGET_TOOLS
+  bool "Build on-target command-line tools"
+  default n if CUSTOM_OS
+  default y
+  ---help---
+  Include Legato's command-line tools (inspect, config, sdir, etc.) for the
+  target.
+
+config RTOS_TARGET_TOOL_RESET
+  bool "Include the reset tool"
+  depends on RTOS && BUILD_TARGET_TOOLS
+  default n
+  --help--
+  Select this if you want to build and install the "reset" tool.  This
+  tools reboots the CPU.
+
+config RTOS_TARGET_TOOL_INSPECT
+  bool "Include the inspect tool"
+  depends on RTOS && BUILD_TARGET_TOOLS
+  default y
+  select MEM_POOL_STATS
+  ---help---
+  Select this if you want to build and install the "inspect" tool.  This
+  tool provides details of the state and resource usage of many Legato
+  objects.
+
+config RUNTIME_DIR
+  string "Runtime directory"
+  depends on POSIX
+  default "/tmp/legato"
+  ---help---
+  Directory to use for runtime state files, such as UNIX domain sockets.
+
+config SOTA
+  bool "Enable software-over-the-air (SOTA) updates"
+  depends on POSIX
+  default y
+  ---help---
+  Enable support for SOTA updates.  SOTA is not supported on non-POSIX
+  systems.
+
+config PROBATION_PERIOD
+  int "Update probation period"
+  range 10 4294967
+  default 1800
+  ---help---
+  Default software update probationary period in seconds.  After this period
+  of time has elapsed with no failures, it is marked as good.  This value can
+  be overridden at runtime by the LE_PROBATION_MS environment variable.
+
+config PYTHON
+  bool "Enable Python support (EXPERIMENTAL)"
+  depends on POSIX
+  depends on EXPERIMENTAL
+  default n
+  ---help---
+  Enable support for Python.  Python is not supported on non-POSIX
+  systems.
+
+config PYTHON_EXECUTABLE
+  string "Python executable"
+  depends on PYTHON
+  default "$(def,$(PYTHON_EXECUTABLE),python2.7)"
+  ---help---
+  Python executable to use for building Python support.  This may be set to an
+  absolute path.
+
+config JAVA
+  bool "Enable Java support (EXPERIMENTAL)"
+  depends on POSIX
+  depends on EXPERIMENTAL
+  default n
+  ---help---
+  Enable support for Java.  Java is not supported on non-POSIX systems.
+
+config JDK_INCLUDE_DIR
+  string "JDK include directory"
+  depends on JAVA
+  default "$(JDK_INCLUDE_DIR)"
+  ---help---
+  Java Development Kit include directory to use when building Java
+  support.
+
+config EJDK_DIR
+  string "Embedded Java Developer Kit directory"
+  depends on JAVA
+  default "$(EJDK_DIR)"
+  ---help---
+  Path to Oracle's Embedded Java Developer Kit, needed if that JVM is to be
+  bundled with the system.
+
+config THREAD_REALTIME_ONLY
+  bool "Use real-time priority for all threads"
+  default n
+  ---help---
+  Force Legato to use only real-time priorities for tasks.
+
+choice
+  prompt "Memory allocation failure behaviour"
+  default MEM_ALLOC_FORCE
+  ---help---
+  Determine how the memory allocation functions le_mem_Alloc() and
+  le_mem_VarAlloc() behave when the pool that they are allocating from is
+  full.
+
+config MEM_ALLOC_FORCE
+  bool "Force"
+  ---help---
+  Force allocation by expanding the pool onto the heap as necessary.
+
+config MEM_ALLOC_ASSERT
+  bool "Assert"
+  ---help---
+  Abort the program with an error if the pool cannot satisfy the request.
+
+endchoice # end "Memory allocation failure behaviour"
+
+config MEM_HIBERNATION
+  bool "Support memory compaction for hibernate to RAM"
+  depends on RTOS
+  default y
+  ---help---
+  Some chips can conserve memory by powering off some memory banks during hibernation.  This
+  option enables compacting memory used by Legato to allow powering off more memory banks during
+  hibernation.
+
+menu "Security Features"
+
+config ENABLE_SMACK
+  bool "Enable SMACK for access controls"
+  depends on LINUX
+  depends on !TARGET_LOCALHOST
+  depends on !TARGET_RASPI
+  default !$(b2k,$(DISABLE_SMACK))
+  ---help---
+  Enable the Simplified Mandatory Access Control Kernel (SMACK) security
+  module on Linux for access controls.
+
+config SMACK_ONLYCAP
+  bool "Enable SMACK onlycap"
+  depends on ENABLE_SMACK
+  default !$(b2k,$(def,$(DISABLE_SMACK_ONLYCAP),y))
+  ---help---
+  Require a specific SMACK label for CAP_MAC_ADMIN and CAP_MAC_OVERRIDE to be
+  effective.  The label is typically set in /smack/onlycap.
+
+config SMACK_ATTR_NAME
+  string "SMACK attribute name"
+  depends on ENABLE_SMACK
+  default "$(def,$(SMACK_ATTR_NAME),security.SMACK64)"
+  ---help---
+  Name of the Legato SMACK attribute.
+
+# TODO: better description
+
+config SMACK_ATTR_VALUE
+  string "SMACK attribute value"
+  depends on ENABLE_SMACK
+  default "$(def,$(SMACK_ATTR_VALUE),_)"
+  ---help---
+  Value of the Legato SMACK attribute.
+
+# TODO: better description
+
+config ENABLE_IMA
+  bool "Enable IMA for file integrity checking"
+  depends on LINUX && !TARGET_LOCALHOST
+  default $(b2k,$(ENABLE_IMA))
+  ---help---
+  Enable the Integrity Measurement Architecture (IMA) on Linux to prevent
+  accidental or malicious file system changes.
+
+config IMA_PRIVATE_KEY
+  string "IMA private key location"
+  depends on ENABLE_IMA
+  default "$(IMA_PRIVATE_KEY)"
+  ---help---
+  File to load the IMA private key from.
+
+config IMA_PUBLIC_CERT
+  string "IMA public certificate location"
+  depends on ENABLE_IMA
+  default "$(IMA_PUBLIC_CERT)"
+  ---help---
+  File to load the IMA public certificate from.
+
+config IMA_SMACK
+  string "SMACK label for IMA"
+  depends on ENABLE_SMACK && ENABLE_IMA
+  default "$(def,$(IMA_SMACK),imaLegato)"
+  ---help---
+  SMACK label to use for IMA purposes.
+
+config ENABLE_IOT_KEYSTORE_API
+  bool "Enable IoT KeyStore library"
+  default y
+  ---help---
+  Enable Legato API for the IoT KeyStore library.
+
+# TODO: better description
+
+endmenu # end "Security Features"
+
+menu "Performance Tuning"
+
+config REDUCE_FOOTPRINT
+  bool "Reduce memory and storage use where possible"
+  default n
+  ---help---
+  Try to reduce the memory and storage footprint of Legato.  This may use
+  alternate data structures which are optimized for size and reduce the scale
+  of some tests.  Selecting this option may result in lower performance and
+  slower applications.
+
+config STATIC_THREAD_STACKS
+  bool "Statically allocate thread stacks"
+  depends on RTOS
+  default n
+  ---help---
+  Allocate stack space for Legato threads from static memory (bss) rather than
+  from the heap.
+
+config MEM_POOLS
+  bool "Use memory pools"
+  default y
+  ---help---
+  Use memory pools for dynamic memory allocation.  Memory pools help prevent
+  memory fragmentation, but require that the pools be sized appropriately for
+  the application.
+  Disabling this option will still allocate memory using the memory pool
+  interface (le_mem), but switches the internal behaviour to use malloc and
+  free on a per-block basis.  This allows tools like Valgrind to accurately
+  track the allocations and de-allocations at the cost of potential memory
+  fragmentation.
+
+config ENABLE_LE_JSON_API
+  bool "Include le_json APIs"
+  default y
+  ---help---
+  Include le_json APIs in liblegato. Disabling this config will make
+  le_json APIs unavailable.
+
+config JSON_PARSER_BUFFER_SIZE
+  int "JSON parser buffer size"
+  depends on ENABLE_LE_JSON_API
+  default 1024 if REDUCE_FOOTPRINT
+  default 50000
+  ---help---
+  The maximum size of the Legato JSON parser buffer, used for
+  storing string values, object member names, and other data types.
+
+config MAX_EVENT_POOL_SIZE
+  int "Maximum event pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default 30
+  ---help---
+  The maximum number of objects in the process-wide event pool, from which the
+  event objects are allocated.
+
+config MAX_HANDLER_POOL_SIZE
+  int "Maximum event handler pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default 15
+  ---help---
+  The maximum number of objects in the process-wide handler pool, from which
+  all handler objects are allocated.
+
+config MAX_QUEUED_FUNCTION_POOL_SIZE
+  int "Maximum queued event function pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default 15
+  ---help---
+  The maximum number of objects in the process-wide queued function report
+  pool, from which Queued Function reports are allocated. Per event ID
+  reports are also allocated from this pool.
+
+config DEFAULT_PUB_SUB_EVENT_REPORT_SIZE
+  int "Default size for publish-subscribe event reports"
+  depends on MEM_POOLS
+  range 1 65535
+  default 512
+  ---help---
+  This value is used as default size for publish subscribe event reports
+  allocated out of the standard report pool.
+  Event reports larger than this have a separate pool created for each report type.
+
+config MAX_FD_MONITOR_POOL_SIZE
+  int "Maximum file descriptor monitor pool size"
+  depends on MEM_POOLS
+  range 2 65535
+  default 10
+  ---help---
+  The maximum number of objects in the process-wide FD monitor pool, from
+  which all FD monitor objects are allocated.
+
+config MAX_SUB_POOLS_POOL_SIZE
+  int "Maximum memory pool sub-pools"
+  depends on MEM_POOLS
+  range 0 65535
+  default 8
+  ---help---
+  The maximum number of sub-pool objects in the memory sub-pools pool.  These
+  are control structures used for managing the subdivision of memory pools.
+
+config MAX_MUTEX_POOL_SIZE
+  int "Maximum mutex pool size"
+  depends on MEM_POOLS
+  range 4 65535
+  default 20
+  ---help---
+  The maximum number of mutex objects in the process-wide mutex pool, from
+  which all Legato mutexes are allocated.
+
+config MAX_SEM_POOL_SIZE
+  int "Maximum semaphore pool size"
+  depends on MEM_POOLS
+  range 2 65535
+  default 64
+  ---help---
+  The maximum number of semaphore objects in the process-wide semaphore pool,
+  from which all Legato semaphores are allocated.
+
+config MAX_THREAD_POOL_SIZE
+  int "Maximum thread pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default 20
+  ---help---
+  The maximum number of thread objects in the process-wide thread pool, from
+  which all Legato threads are allocated.
+
+config MAX_THREAD_DESTRUCTOR_POOL_SIZE
+  int "Maximum thread destructor pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default (MAX_THREAD_POOL_SIZE) if RTOS
+  default 40
+  ---help---
+  The maximum number of thread destructors in the process-wide thread
+  destructor pool, from which all thread destructor objects are allocated.
+
+config MAX_TIMER_POOL_SIZE
+  int "Maximum timer pool size"
+  depends on MEM_POOLS
+  range 1 65535
+  default 40
+  ---help---
+  The maximum number of timer objects in the process-wide timer pool, from
+  which all Legato timers are allocated.
+
+config MAX_PATH_ITERATOR_POOL_SIZE
+  int "Maximum path iterator count"
+  depends on MEM_POOLS
+  range 0 65535
+  default 10
+  ---help---
+  The maximum number of path iterator in the process-wide iterator pools, from
+  which all Legato path iterators are allocated.
+
+config MAX_MSG_LOCAL_CLIENT_SESSION_POOL_SIZE
+  int "Maximum local client messaging sessions"
+  depends on MEM_POOLS
+  range 0 65535
+  default 50 if RTOS
+  default 0
+  ---help---
+  The maximum number of simultaneous messaging sessions supported with local
+  clients.
+
+config MAX_ARG_OPTIONS
+  int "Maximum number of command line options"
+  depends on MEM_POOLS
+  range 0 65535
+  default 16 if RTOS
+  default 64
+  ---help---
+  Total number of command line options that can be handled by an app.  On
+  RTOS, this pool is a shared resource for all apps.
+
+config MAX_ARG_POSITIONAL_CALLBACKS
+  int "Maximum number of positional argument callbacks"
+  depends on MEM_POOLS
+  range 0 65535
+  default 8 if RTOS
+  default 128
+  ---help---
+  Total number of command line positional arguments that can be handled by an
+  app.  On RTOS, this pool is a shared resource for all apps.
+
+config CLI_STACK_SIZE
+  int "Size of CLI thread stack"
+  depends on RTOS
+  range 0 4294967295
+  default 2048
+  ---help---
+  All CLI commands are run by CLI thread. This value is a size (in bytes) of
+  stack for the CLI thread.
+
+endmenu # end "Performance Tuning"
+
+menu "Diagnostic Features"
+
+choice
+  prompt "Static log level filter"
+  default LOG_STATIC_FILTER_INFO if REDUCE_FOOTPRINT
+  default LOG_STATIC_FILTER_DEBUG
+  ---help---
+  Select the static filter for log statements.  Log statements with a lower
+  priority than this level will be omitted from compiled code.
+
+config LOG_STATIC_FILTER_DEBUG
+  bool "Debug"
+  ---help---
+  Include all statements up to and including debug level.
+
+config LOG_STATIC_FILTER_INFO
+  bool "Info"
+  ---help---
+  Include all statements up to and including info level.
+
+config LOG_STATIC_FILTER_WARN
+  bool "Warning"
+  ---help---
+  Include all statements up to and including warning level.
+
+config LOG_STATIC_FILTER_ERR
+  bool "Error"
+  ---help---
+  Include all statements up to and including error level.
+
+config LOG_STATIC_FILTER_CRIT
+  bool "Critical"
+  ---help---
+  Include all statements up to and including critical level.
+
+config LOG_STATIC_FILTER_EMERG
+  bool "Emergency"
+  ---help---
+  Include only emergency-level log statements.
+
+config LOG_STATIC_FILTER_NO_LOG
+  bool "No logging"
+  ---help---
+  Disable all logging statements.
+
+endchoice # end "Static log level filter"
+
+config ENABLE_SEGV_HANDLER
+  bool "Enable SIGSEGV handler"
+  depends on LINUX
+  default y
+  ---help---
+  When a segmentation fault occurs, use signal derivation and
+  sigsetjmp()/siglongjmp() to try and survive the invalid memory access long
+  enough to generate a backtrace.  This handler relies on undefined behaviour
+  of sigsetjmp() and is therefore not guaranteed to work.
+
+config ENABLE_BACKTRACE
+  bool "Enable Legato assertion backtraces"
+  default y
+  ---help---
+  Print backtraces when a Legato assertion is triggered.  This can be helpful
+  in debugging errors.
+
+config USE_GUARD_BAND
+  bool "Enable memory guard bands"
+  default y
+  ---help---
+  Insert chunks of memory into each allocated memory block before and after
+  the user data portion.  These "guard bands" are filled with a special
+  pattern that is unlikely to occur in normal data.  Whenever a block is
+  allocated or released, the guard bands are checked for corruption and any
+  corruption is reported.
+
+config NUM_GUARD_BAND_WORDS
+  int "Number of guard band words"
+  depends on USE_GUARD_BAND
+  range 1 8
+  default 1 if REDUCE_FOOTPRINT
+  default 8
+  ---help---
+  The number of words in each guard band.  This number of words will be
+  inserted before and after every memory allocation, increasing the allocation
+  size in words by NUM_GUARD_BAND_WORDS * 2.
+
+config MEM_POOL_STATS
+  bool "Track memory pool statistics"
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Track memory pool statistics which are not needed during runtime.  These
+  are:
+   - Number of overflows
+   - Number of allocations
+   - Maximum blocks used
+
+config LOG_FUNCTION_NAMES
+  bool "Log function names"
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Include the function name where a log message originated in the message preamble.
+
+config THREAD_SETNAME
+  bool "Set names of threads created from Legato"
+  default y
+  ---help---
+  Use Legato thread names as the names for underlying OS threads as well.
+  This has no effect if the OS does not allow setting thread names.  If Legato
+  thread names are disabled, this will just set the name to "<legato>."
+
+config NAMES_ENABLED
+  bool "Enable names in Legato objects"
+  default y
+  ---help---
+  Add name fields to Legato objects (mutexes, threads, memory pools, etc)
+  for logging, debugging, and tracing purposes.  Turning this off will
+  reduce RAM usage at the expense of traceability.
+
+config FD_MONITOR_NAMES_ENABLED
+  bool "Enable names in file descriptor monitors"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato file descriptor monitors.
+
+config SEM_NAMES_ENABLED
+  bool "Enable names in semaphores"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato semaphores.
+
+config MUTEX_NAMES_ENABLED
+  bool "Enable names in mutexes"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato mutexes.
+
+config THREAD_NAMES_ENABLED
+  bool "Enable names in threads"
+  depends on NAMES_ENABLED
+  default y
+  ---help---
+  Add a name field to Legato threads.
+
+config MEM_POOL_NAMES_ENABLED
+  bool "Enable names in memory pools"
+  depends on NAMES_ENABLED
+  default y
+  ---help---
+  Add a name field to Legato memory pools.
+
+config MEM_TRACE
+  bool "Enable memory pool tracing"
+  depends on MEM_POOL_NAMES_ENABLED
+  default n
+  ---help---
+  If enabled, the memory subsystem will create a trace point for every memory
+  pool created.  The name of the tracepoint will be the same of the pool, and
+  is of the form "component.poolName".
+
+config TIMER_NAMES_ENABLED
+  bool "Enable names in timers"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato timers.
+
+config EVENT_NAMES_ENABLED
+  bool "Enable names in events"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato event IDs.
+
+config HASHMAP_NAMES_ENABLED
+  bool "Enable names in hashmaps"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato hashmaps.  Disabling this also disables
+  hashmap tracing.
+
+config SAFE_REF_NAMES_ENABLED
+  bool "Enable names in safe references"
+  depends on NAMES_ENABLED
+  default n if REDUCE_FOOTPRINT
+  default y
+  ---help---
+  Add a name field to Legato safe references.
+
+endmenu # end "Diagnostic Features"
+
+### Daemon Options ###
+
+menu "Daemon Setup"
+rsource "daemons/KConfig"
+endmenu # end "Daemons"
+
+menu "RPC"
+  depends on EXPERIMENTAL
+
+config RPC
+  bool "Enable RPC Proxy infrastructure (EXPERIMENTAL)"
+  default n
+  ---help---
+    Select this to enable the RPC Proxy infrastructure (EXPERIMENTAL).
+    WARNING:  Enabling this feature will break backwards compatibility
+              with existing IPC bindings and applications.
+
+config RPC_PROXY_LIBRARY
+  bool "Enable RPC Proxy as a library component"
+  depends on RPC && POSIX
+  default n
+  ---help---
+    Select this to build the RPC Proxy as a library component
+    that can be linked into an application or executable file.
+
+config RPC_RUNTIME_CONFIG_TREE
+  bool "Use ConfigTree to store RPC Run-time configuration"
+  depends on RPC && ENABLE_CONFIG_TREE
+  default y if ENABLE_CONFIG_TREE
+  default n
+  ---help---
+    Select this to enable the RPC Proxy to store dynamic run-time configuration
+    in the Configuration Tree.
+
+config RPC_ENABLE_CONFIG_TREE
+  bool
+  default y if LINUX || RPC_RUNTIME_CONFIG_TREE
+  default n
+
+config RPC_PROXY_SERVICE_BINDINGS_MAX_NUM
+  int "Maximum number of RPC service bindings"
+  depends on RPC
+  range 0 30
+  default 4
+  ---help---
+  The maximum number of simultaneous RPC service bindings.
+
+config RPC_PROXY_FILE_STREAM_MAX_NUM
+  int "Maximum number of simultaneous file streams"
+  depends on RPC
+  range 0 30
+  default 5
+  ---help---
+  The maximum number of simultaneous RPC file streams.
+
+config RPC_PROXY_MSG_LARGE_OUT_PARAMETER_MAX_NUM
+  int "Maximum number of large string/array parameters to be buffered simultaneously"
+  depends on RPC
+  range 0 32
+  default 5
+  ---help---
+  The maximum number of large string/array parameters to be buffered simultaneously
+
+config RPC_PROXY_MSG_SMALL_OUT_PARAMETER_MAX_NUM
+  int "Maximum number of small string/array parameters to be buffered simultaneously"
+  depends on RPC
+  range 0 32
+  default 10
+  ---help---
+  The maximum number of small string/array parameters to be buffered simultaneously
+
+config RPC_PROXY_MAX_LARGE_OUT_PARAMETER_SIZE
+  int "Maximum size of a large string/array parameter"
+  depends on RPC && (RTOS || RPC_PROXY_LIBRARY)
+  range 0 4096
+  default 1024
+  ---help---
+  The maximum size of a large string/array parameter
+
+config RPC_PROXY_MAX_SMALL_OUT_PARAMETER_SIZE
+  int "Maximum size of a small string/array parameter"
+  depends on RPC && (RTOS || RPC_PROXY_LIBRARY)
+  range 0 4096
+  default 128
+  ---help---
+  The maximum size of a small string/array parameter
+
+config RPC_PROXY_MAX_FILE_STREAM_PAYLOAD
+  int "Maximum payload size for file stream messages"
+  depends on RPC
+  range 0 4096
+  default 512
+  ---help---
+  The maximum size of a RPC message that can be sent and received between RPC-enabled systems.
+
+config RPC_PROXY_ASYNC_EVENT_HANDLER_MAX_NUM
+  int "Maximum number of async event handlers"
+  depends on RPC
+  range 0 4294967295
+  default 5
+  ---help---
+  The maximum number of async event handlers client can register with server.
+
+config RPC_PROXY_ASYNC_EVENTS_MAX_NUM
+  int "Maximum number of simultaneous async events"
+  depends on RPC
+  range 2 4294967295
+  default 3
+  ---help---
+  The maximum number of async events that can be buffered before they are sent out
+  to wire or consumend by client.
+
+config RPC_PROXY_NETWORK_KEEPALIVE_SERVICE_INTERVAL
+  int "Frequency of RPC Keep-Alive network service (in seconds)"
+  depends on RPC
+  range 1 4294967295
+  default 120
+  ---help---
+  The Frequency of Keep-Alice service, used to monitor the health of a remote RPC-enabled system.
+
+config RPC_PROXY_NETWORK_KEEPALIVE_TIMEOUT_TIMER_INTERVAL
+  int "RPC Keep-Alive time-out period (in seconds)"
+  depends on RPC
+  range 1 4294967295
+  default 30
+  ---help---
+  The length of time the RPC Proxy will wait before declaring a
+  remote RPC-enabled system as unreachable (DOWN).
+
+config RPC_PROXY_NETWORK_CONNECTION_RETRY_TIMER_INTERVAL
+  int "Network connection retry timer (in seconds)"
+  depends on RPC
+  range 1 4294967295
+  default 15
+  ---help---
+  The length of time the RPC Proxy will wait before attempting to
+  re-connect to a remote RPC-enabled system.
+
+config RPC_PROXY_CONNECT_SERVICE_REQUEST_TIMER_INTERVAL
+  int "RPC Connect-Service time-out period (in seconds)"
+  depends on RPC
+  range 1 4294967295
+  default 15
+  ---help---
+  The length of time the RPC Proxy will wait before abandoning a
+  pending connect-service request.
+
+
+endmenu

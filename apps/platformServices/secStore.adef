@@ -1,0 +1,69 @@
+sandboxed: false
+
+executables:
+{
+    secStore = ( $LEGATO_ROOT/components/secStore/secStoreDaemon
+                 $LEGATO_ROOT/components/secStore/iotKeystore )
+}
+
+processes:
+{
+    run:
+    {
+        ( secStore )
+    }
+
+    faultAction: restart
+#if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+    maxWatchdogTimeout: 120000
+#else
+    watchdogTimeout: never
+#endif
+#if ${LE_CONFIG_LINUX} = y
+#else
+    maxStackBytes: 8192
+#endif
+}
+
+extern:
+{
+    secStore.secStoreDaemon.le_secStore
+    secStore.iotKeystore.le_iks
+    secStore.iotKeystore.le_iks_aesMilenage
+    secStore.iotKeystore.le_iks_aesGcm
+    secStore.iotKeystore.le_iks_hmac
+    secStore.iotKeystore.le_iks_aesCbc
+    secStore.iotKeystore.le_iks_aesCmac
+    secStore.iotKeystore.le_iks_rsa
+    secStore.iotKeystore.le_iks_ecc
+
+#if ${LE_CONFIG_LINUX} = ""
+    secStore.secStoreDaemon.le_appInfo
+    secStore.watchdogChain.le_wdog
+#endif
+#if ${MK_CONFIG_SECSTORE_DISABLE_ADMIN} = ""
+    secStore.secStoreDaemon.secStoreAdmin
+#endif
+#if ${MK_CONFIG_SECSTORE_DISABLE_GLOBAL_ACCESS} = ""
+    secStore.secStoreDaemon.secStoreGlobal
+#endif
+}
+
+#if ${LEGATO_SECSTORE_PA} = ${PA_DIR}/trustZone/swi/components/le_pa_secStoreTz
+#if ${LE_CONFIG_LINUX} = ""
+extern:
+{
+    secStore.le_pa_secStoreTz.le_cfg
+}
+#endif
+#endif
+
+
+#if ${LE_CONFIG_LINUX} = y
+bindings:
+{
+    secStore.secStoreDaemon.le_appInfo  -> <root>.le_appInfo
+    secStore.secStoreDaemon.le_instStat -> <root>.le_instStat
+    secStore.secStoreDaemon.le_update   -> <root>.le_update
+}
+#endif

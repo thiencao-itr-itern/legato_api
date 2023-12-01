@@ -1,0 +1,27 @@
+/*
+ * Copyright (C) Sierra Wireless Inc.
+ */
+
+provides:
+{
+    api:
+    {
+        ipcTest.api [async]
+    }
+}
+
+cflags:
+{
+    -I$CURDIR/../utils
+}
+
+sources:
+{
+    casyncserver.c
+    ../utils/utils.c
+}
+
+pools:
+{
+    ipcTest.ipcTest_Messages = 3
+}

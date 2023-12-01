@@ -1,0 +1,23 @@
+start: manual
+
+watchdogTimeout: never
+
+executables:
+{
+    dogTestNever = (dogTestNever)
+}
+
+processes:
+{
+    run:
+    {
+        (dogTestNever)
+    }
+}
+
+#if ${LE_CONFIG_RTOS} = y
+bindings:
+{
+    dogTestNever.dogTestNever.le_wdog -> watchdog.le_wdog
+}
+#endif

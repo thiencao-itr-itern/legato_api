@@ -1,0 +1,26 @@
+sandboxed: false
+start: manual
+
+executables:
+{
+    httpTest = ( httpTestComponent )
+}
+
+processes:
+{
+    run:
+    {
+        ( httpTest 0 www.google.ca 80 / )
+    }
+
+#if ${LE_CONFIG_LINUX} = y
+#else
+    maxStackBytes: 8192
+#endif
+}
+
+bindings:
+{
+    httpTest.socketLibrary.le_mdc -> modemService.le_mdc
+    httpTest.httpClientLibrary.le_mdc -> modemService.le_mdc
+}

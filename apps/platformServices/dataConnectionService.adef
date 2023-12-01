@@ -1,0 +1,87 @@
+sandboxed: false
+
+executables:
+{
+    dcsDaemon = ( $LEGATO_ROOT/components/dataConnectionService/dcsDaemon
+                  $LEGATO_ROOT/components/dataConnectionService/dcs
+                  $LEGATO_ROOT/components/dataConnectionService/dcsNet
+                  $LEGATO_ROOT/components/dataConnectionService/dcsCellular
+    #if ${LE_CONFIG_ENABLE_WIFI} = y
+                  $LEGATO_ROOT/components/dataConnectionService/dcsWifi
+    #endif
+    #if ${LE_CONFIG_ENABLE_ETHERNET} = y
+                  $LEGATO_ROOT/components/dataConnectionService/dcsEthernet
+    #endif
+    #if ${LE_CONFIG_LINUX} = y
+                  $LEGATO_ROOT/components/clockService/clockSync
+    #endif
+                )
+}
+
+processes:
+{
+    run:
+    {
+        (dcsDaemon)
+    }
+
+    faultAction: restart
+    #if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+        maxWatchdogTimeout: 160000
+    #else
+        watchdogTimeout: never
+    #endif
+
+#if ${LE_CONFIG_RTOS} = y
+    maxStackBytes: 8192
+#endif
+}
+
+bindings:
+{
+    dcsDaemon.dcsDaemon.le_mrc -> modemService.le_mrc
+    dcsDaemon.dcs.le_mdc -> modemService.le_mdc
+    dcsDaemon.dcs.le_mrc -> modemService.le_mrc
+    dcsDaemon.dcsCellular.le_mdc -> modemService.le_mdc
+    dcsDaemon.dcsCellular.le_mrc -> modemService.le_mrc
+#if ${LE_CONFIG_LINUX} = y
+    dcsDaemon.dcs.le_appInfo -> <root>.le_appInfo
+    dcsDaemon.dcsNet.le_appInfo -> <root>.le_appInfo
+    #if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+        dcsDaemon.watchdogChain.le_wdog -> <root>.le_wdog
+    #endif
+    #if ${LE_CONFIG_ENABLE_WIFI} = y
+        dcsDaemon.dcsDaemon.le_wifiClient -> wifiService.le_wifiClient
+        dcsDaemon.dcsWifi.le_wifiClient -> wifiService.le_wifiClient
+    #endif
+#else
+    dcsDaemon.dcs.le_appInfo -> appInfo.le_appInfo
+    dcsDaemon.dcsNet.le_appInfo -> appInfo.le_appInfo
+#if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+    dcsDaemon.dcsDaemon.le_cfg -> configTree.le_cfg
+    dcsDaemon.dcsCellular.le_cfg -> configTree.le_cfg
+    dcsDaemon.dcs.le_cfg -> configTree.le_cfg
+#endif
+#endif
+}
+
+requires:
+{
+#if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+    configTree:
+    {
+        [r] .
+    }
+#endif
+}
+
+extern:
+{
+    dcsDaemon.dcsDaemon.le_data
+    dcsDaemon.dcs.le_dcs
+    dcsDaemon.dcsNet.le_net
+#if ${LE_CONFIG_LINUX} = y
+    dcsDaemon.clockSync.le_clkSync
+#endif
+    dcsDaemon.watchdogChain.le_wdog
+}

@@ -1,0 +1,53 @@
+
+provides:
+{
+    api:
+    {
+        le_fwupdate.api [direct]
+#if ${LE_CONFIG_LINUX} = y
+        le_dualsys.api
+        le_flash.api
+#endif
+    }
+}
+
+sources:
+{
+    fwupdateServer.c
+#if ${LE_CONFIG_LINUX} = y
+    le_dualsys.c
+    le_flash.c
+#endif
+}
+
+cflags:
+{
+    -I${LEGATO_ROOT}/components/fwupdate/platformAdaptor/inc
+    -I${LEGATO_ROOT}/components/fwupdate/fwupdateDaemon
+    -I${LEGATO_ROOT}/components/watchdogChain
+}
+
+requires:
+{
+    api:
+    {
+        ${LEGATO_ROOT}/interfaces/le_pm.api [optional]
+        le_cfg.api
+    }
+    component:
+    {
+        // Symbol resolution is from bottom-to-top, so order matters
+        // and the default PA needs to be last when it comes to symbol
+        // resolution, which means it needs to be first in this list.
+#if ${LE_CONFIG_LINUX} = y
+        ${LEGATO_FWUPDATE_PA_DEFAULT}
+#endif
+        ${LEGATO_FWUPDATE_PA}
+#if ${LE_CONFIG_LINUX} = y
+        ${LEGATO_FWUPDATE_PA_DUALSYS}
+        ${LEGATO_FWUPDATE_PA_SINGLESYS}
+        ${LEGATO_FWUPDATE_PA_FLASH}
+#endif
+        ${LEGATO_ROOT}/components/watchdogChain
+    }
+}

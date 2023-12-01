@@ -1,0 +1,117 @@
+sandboxed: false
+
+executables:
+{
+    modemDaemon = ($LEGATO_ROOT/components/modemServices/modemDaemon
+                   $LEGATO_ROOT/components/watchdogChain)
+#if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+    rSimDaemon  = ($LEGATO_ROOT/components/modemServices/rSimDaemon
+                   $LEGATO_ROOT/components/watchdogChain)
+#elif ${MK_CONFIG_MODEMSERVICE_RSIM} = y
+    rSimDaemon  = ($LEGATO_ROOT/components/modemServices/rSimDaemon
+                   $LEGATO_ROOT/components/watchdogChain)
+#endif
+}
+
+processes:
+{
+    run:
+    {
+        (modemDaemon)
+    #if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+        (rSimDaemon)
+    #elif ${MK_CONFIG_MODEMSERVICE_RSIM} = y
+        (rSimDaemon)
+    #endif
+    }
+
+    faultAction: restart
+    #if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+        maxWatchdogTimeout: 280000
+    #else
+        watchdogTimeout: never
+    #endif
+#if ${LE_CONFIG_RTOS} = y
+    maxStackBytes: 8192
+#endif
+}
+
+bundles:
+{
+    file:
+    {
+        [r] $LEGATO_ROOT/components/modemServices/modemDaemon/apns-iin-conf.json    /usr/local/share/apns-iin.json
+        [r] $LEGATO_ROOT/components/modemServices/modemDaemon/apns-full-conf.json   /usr/local/share/apns-mccmnc.json
+    }
+}
+
+bindings:
+{
+#if ${MK_CONFIG_MODEMSERVICE_NO_POWERMANAGER} = ""
+    modemDaemon.modemDaemon.le_pm -> powerMgr.le_pm
+#endif
+#if ${LE_CONFIG_LINUX} = y
+    modemDaemon.watchdogChain.le_wdog -> <root>.le_wdog
+
+    #if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+    rSimDaemon.watchdogChain.le_wdog -> <root>.le_wdog
+    #endif
+
+    modemDaemon.modemDaemon.le_appInfo -> <root>.le_appInfo
+#endif
+}
+
+#if ${LE_CONFIG_LINUX} = y
+#else
+extern:
+{
+    modemDaemon.modemDaemon.le_appInfo
+#if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+    modemDaemon.modemDaemon.le_cfg
+#endif
+    modemWDog = modemDaemon.watchdogChain.le_wdog
+#if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+    rSimWDog = rSimDaemon.watchdogChain.le_wdog
+#elif ${MK_CONFIG_MODEMSERVICE_RSIM} = y
+    rSimWDog = rSimDaemon.watchdogChain.le_wdog
+#endif
+}
+#endif
+
+requires:
+{
+    configTree:
+    {
+        [w] .
+    }
+}
+
+extern:
+{
+    modemDaemon.modemDaemon.le_info
+    modemDaemon.modemDaemon.le_mdc
+    modemDaemon.modemDaemon.le_mrc
+    modemDaemon.modemDaemon.le_sim
+    modemDaemon.modemDaemon.le_sms
+    modemDaemon.modemDaemon.le_ips
+    modemDaemon.modemDaemon.le_temp
+    modemDaemon.modemDaemon.le_riPin
+    modemDaemon.modemDaemon.le_adc
+#if ${MK_CONFIG_MODEMSERVICE_NO_LPT} = ""
+    modemDaemon.modemDaemon.le_lpt
+#endif
+#if file_exists(${LEGATO_MODEM_PA}/exports)
+#include "${LEGATO_MODEM_PA}/exports"
+#endif
+
+#if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+    modemDaemon.modemDaemon.le_mcc
+    modemDaemon.modemDaemon.le_ecall
+    modemDaemon.modemDaemon.le_antenna
+    modemDaemon.modemDaemon.le_rtc
+    modemDaemon.modemDaemon.le_mdmCfg
+    rSimDaemon.rSimDaemon.le_rsim
+#elif ${MK_CONFIG_MODEMSERVICE_RSIM} = y
+    rSimDaemon.rSimDaemon.le_rsim
+#endif
+}

@@ -1,0 +1,570 @@
+{#-
+ # Helper macros for generating packing/unpacking code.
+ #
+ # Copyright (C) Sierra Wireless Inc.
+-#}
+{%- macro DeclareEnumPackUnpack(type) %}
+static inline bool {{type.iface.name}}_Pack{{type.name}}
+(
+    uint8_t **bufferPtr,
+    {{type|FormatType}} value
+)
+{
+    {%- if type.size == interface.findType('uint32').size %}
+    return le_pack_PackUint32(bufferPtr, (uint32_t)value);
+    {%- elif type.size == interface.findType('uint64').size %}
+    return le_pack_PackUint64(bufferPtr, (uint64_t)value);
+    {%- else %}
+    #error "Unexpected enum size"
+    {%- endif %}
+}
+
+static inline bool {{type.iface.name}}_Unpack{{type.name}}
+(
+    uint8_t **bufferPtr,
+    {{type|FormatType}}* valuePtr
+)
+{
+    bool result;
+    {%- if type.size == interface.findType('uint32').size %}
+    uint32_t value = 0;
+    result = le_pack_UnpackUint32(bufferPtr, &value);
+    {%- elif type.size == interface.findType('uint64').size %}
+    uint64_t value = 0;
+    result = le_pack_UnpackUint64(bufferPtr, &value);
+    {%- else %}
+    #error "Unexpected enum size"
+    {%- endif %}
+    if (result)
+    {
+        *valuePtr = ({{type|FormatType}})value;
+    }
+    return result;
+}
+{%- endmacro %}
+
+{%- macro DeclareStructPackUnpack(type) %}
+static inline bool {{type.iface.name}}_Pack{{type.name}}
+(
+    uint8_t **bufferPtr,
+    const {{type|FormatType}} *valuePtr
+)
+{
+    __attribute__((unused))
+    bool subResult, result = true;
+
+    LE_ASSERT(valuePtr);
+
+    subResult = le_pack_PackIndefArrayHeader(bufferPtr);
+    result = result && subResult;
+
+    {%- for member in type.members %}
+    {%- if member is StringMember %}
+    subResult = le_pack_PackString( bufferPtr,
+                                    valuePtr->{{member.name|DecorateName}}, {{member.maxCount}});
+    {%- elif member is ArrayMember %}
+    LE_PACK_PACKARRAY( bufferPtr,
+                       valuePtr->{{member.name|DecorateName}}, valuePtr->{{member.name}}Count,
+                       {{member.maxCount}}, {{member.apiType|PackFunction}},
+                       &subResult );
+    {%- elif member.apiType is StructType %}
+    subResult = {{member.apiType|PackFunction}}( bufferPtr,
+                                                 &valuePtr->{{member.name|DecorateName }} );
+    {%- else %}
+    subResult = {{member.apiType|PackFunction}}( bufferPtr,
+                                                 valuePtr->{{member.name|DecorateName}} );
+    {%- endif %}
+    result = result && subResult;
+    {%- endfor %}
+
+    subResult = le_pack_PackEndOfIndefArray(bufferPtr);
+    result = result && subResult;
+
+    return result;
+}
+
+static inline bool {{type.iface.name}}_Unpack{{type.name}}
+(
+    uint8_t **bufferPtr,
+    {{type|FormatType}} *valuePtr
+)
+{
+    bool result = true;
+
+    if (result)
+    {
+        result = le_pack_PackIndefArrayHeader(bufferPtr);
+    }
+    {%- for member in type.members %}
+    {%- if member is StringMember %}
+    if (result)
+    {
+        result = le_pack_UnpackString(bufferPtr,
+                                      valuePtr->{{member.name|DecorateName}},
+                                      sizeof(valuePtr->{{member.name|DecorateName}}),
+                                      {{member.maxCount}});
+    }
+    {%- elif member is ArrayMember and member.apiType is ReferenceType %}
+    if (result)
+    {
+        LE_PACK_UNPACKTAGGEDARRAY( bufferPtr,
+                                &valuePtr->{{member.name|DecorateName}},
+                                &valuePtr->{{member.name}}Count,
+                                {{member.maxCount}}, {{member.apiType|UnpackFunction}},
+                                &result );
+    }
+    {%- elif member is ArrayMember %}
+    if (result)
+    {
+        LE_PACK_UNPACKARRAY( bufferPtr,
+                             &valuePtr->{{member.name|DecorateName}},
+                             &valuePtr->{{member.name}}Count,
+                             {{member.maxCount}}, {{member.apiType|UnpackFunction}},
+                             &result );
+    }
+    {%- elif member.apiType is ReferenceType %}
+    if (result)
+    {
+        result = {{member.apiType|UnpackFunction}}(bufferPtr,
+                                                   &valuePtr->{{member.name|DecorateName}}, NULL);
+    }
+    {%- else %}
+    if (result)
+    {
+        result = {{member.apiType|UnpackFunction}}(bufferPtr,
+                                                   &valuePtr->{{member.name|DecorateName}} );
+    }
+    {%- endif %}
+    {%- endfor %}
+
+    if (result)
+    {
+        result = le_pack_PackEndOfIndefArray(bufferPtr);
+    }
+
+    return result;
+}
+{%- endmacro %}
+
+
+{%- macro PackInputs(parameterList,useBaseName=False,initiatorWaits=False) %}
+    {%- for parameter in parameterList
+        if parameter is InParameter
+           or parameter is StringParameter
+           or parameter is ArrayParameter %}
+    {%- if initiatorWaits and args.localService and (parameter is StringParameter or
+                                                  parameter is OptimizableArray) %}
+    // Pack TagID to allow external identification of the
+    // StringParameter or ArrayParameter tuple
+    {%- if parameter is not InParameter %}
+    if ({{parameter|FormatParameterName}})
+    {
+    {%- endif %}
+        LE_ASSERT(le_pack_PackTaggedSizePointerTuple( &_msgBufPtr,
+                                                 {{parameter|GetParameterCount}},
+                                                 (void*){{parameter|FormatParameterName}},
+                                                 {{parameter|SizePointerTag}} ));
+    {%- if parameter is not InParameter %}
+    }
+    {%- endif %}
+    {%- elif parameter is not InParameter %}
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT(le_pack_PackSize( &_msgBufPtr, {{parameter|GetParameterCount}} ));
+    }
+    {%- elif parameter is StringParameter %}
+    LE_ASSERT(le_pack_PackString( &_msgBufPtr,
+                                  {{parameter|FormatParameterName}}, {{parameter.maxCount}} ));
+    {%- elif parameter is ArrayParameter %}
+    bool {{parameter.name}}Result;
+        {%- if parameter.apiType is StructType %}
+            LE_PACK_PACKSTRUCTARRAY( &_msgBufPtr,
+                       {{parameter|FormatParameterName}}, {{parameter|GetParameterCount}},
+                       {{parameter.maxCount}}, {{parameter.apiType|PackFunction}},
+                       &{{parameter.name}}Result );
+        {%- elif parameter is ByteStringArray %}
+            {{parameter.name}}Result = le_pack_PackByteString( &_msgBufPtr,
+                                        {{parameter|FormatParameterName}},
+                                        {{parameter|GetParameterCount}});
+        {%- else %}
+            LE_PACK_PACKARRAY( &_msgBufPtr,
+                       {{parameter|FormatParameterName}}, {{parameter|GetParameterCount}},
+                       {{parameter.maxCount}}, {{parameter.apiType|PackFunction}},
+                       &{{parameter.name}}Result );
+        {%- endif %}
+    LE_ASSERT({{parameter.name}}Result);
+    {%- elif parameter.apiType is HandlerType %}
+    // The handlerPtr and contextPtr input parameters are stored in the client
+    // data object, and it is a safe reference to this object that is passed down
+    // as the context pointer.  The handlerPtr is not passed down.
+    // Create a new client data object and fill it in
+    _ClientData_t* _clientDataPtr = le_mem_Alloc(_ClientDataPool);
+    _clientDataPtr->handlerPtr = {{parameter|FormatParameterName}};
+    _clientDataPtr->contextPtr = contextPtr;
+    _clientDataPtr->callersThreadRef = le_thread_GetCurrent();
+    // Create a safeRef to be passed down as the contextPtr
+    _LOCK
+    contextPtr = le_ref_CreateRef(_HandlerRefMap, _clientDataPtr);
+    _UNLOCK
+#ifdef LE_CONFIG_RPC
+    LE_ASSERT(le_pack_PackTaggedReference( &_msgBufPtr, contextPtr, LE_PACK_CONTEXT_PTR_REFERENCE ));
+#else
+    LE_ASSERT(le_pack_PackReference( &_msgBufPtr, contextPtr ));
+#endif
+    {%- elif parameter.apiType is BasicType and parameter.apiType.name == 'file' %}
+    le_msg_SetFd(_msgRef, {{parameter|FormatParameterName}});
+    {%- else %}
+    LE_ASSERT({{parameter.apiType|PackFunction}}( &_msgBufPtr,
+                                                  {{parameter|FormatParameterName}} ));
+    {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{#-
+ # Declare and initialize default values for variables for all input parameters.  This must
+ # be called before UnpackInputs to create the variables UnpackInputs will use.
+ #
+ # Params:
+ #     - parameterList: List of all parameters to the API function
+ #     - useBaseName: Use the API name instead of the API alias name for naming functions.
+ #       For example, if a .cdef contains `requires: { api: { le_gpio5 = le_gpio.api } }`,
+ #       typically functions and types will have a `le_gpio5` prefix.  With useBaseName=True
+ #       they will have a `le_gpio` prefix.  This is used when generating common client code
+ #       such as in TEMPLATE_common.c.
+ #     - initiatorWaits: True if the caller waits for a response.  In this case some stack
+ #       space and time can be saved by using the caller's buffer directly instead of creating
+ #       a copy.
+ #
+ # Note: This is split from UnpackInputs for compilers such as ARM RVCT which warn when skipping
+ #       initializers via goto.
+ #}
+{%- macro DeclareInputs(parameterList,useBaseName=False,initiatorWaits=False) %}
+    {%- for parameter in parameterList
+        if parameter is InParameter
+           or parameter is StringParameter
+           or parameter is ArrayParameter %}
+    {%- if args.localService and initiatorWaits and (parameter is StringParameter or
+                                                  parameter is OptimizableArray) %}
+    __attribute__((unused))
+    size_t {{parameter.name}}Size = 0;
+    {%- if parameter is ArrayParameter %}
+    {{parameter.apiType|FormatType(useBaseName)}}
+    {%- elif parameter is StringParameter %}
+    char
+    {%- else %}
+    void
+    {%- endif %}
+        *{{parameter|FormatParameterName}} = NULL;
+    {%- elif parameter is not InParameter %}
+    size_t {{parameter.name}}Size = 0;
+    {%- elif parameter is StringParameter %}
+    char {{parameter|FormatParameterName}}[{{parameter.maxCount + 1}}] = {0};
+    {%- elif parameter is ArrayParameter %}
+    size_t {{parameter.name}}Size = 0;
+    {{parameter.apiType|FormatType(useBaseName)}}
+        {{parameter|FormatParameterName}}[{{parameter.maxCount}}]
+            = { {{parameter.apiType|FormatTypeInitializer(useBaseName)}} };
+    bool {{parameter.name}}Result;
+    {%- elif parameter.apiType is HandlerType %}
+    void *contextPtr = NULL;
+    {%- elif parameter.apiType is BasicType and parameter.apiType.name == 'file' %}
+    {{parameter.apiType|FormatType(useBaseName)}} {{parameter.name|DecorateName}}
+        {#- #} = {{parameter.apiType|FormatTypeInitializer(useBaseName)}};
+    {%- else %}
+    {{parameter.apiType|FormatType(useBaseName)}} {{parameter.name|DecorateName}}
+        {#- #} = {{parameter.apiType|FormatTypeInitializer(useBaseName)}};
+    {%- if parameter.apiType is StructType %}
+    {{parameter.apiType|FormatType}} *{{parameter|FormatParameterName}} =
+        &{{parameter.name|DecorateName}};
+    {%- endif %}
+    {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{#-
+ # Unpack all input parameters to this function into temporary variables previously declared
+ # with DeclareInputs
+ #
+ # Params:
+ #     - parameterList: List of all parameters to the API function
+ #     - useBaseName: Use the API name instead of the API alias name for naming functions.
+ #       For example, if a .cdef contains `requires: { api: { le_gpio5 = le_gpio.api } }`,
+ #       typically functions and types will have a `le_gpio5` prefix.  With useBaseName=True
+ #       they will have a `le_gpio` prefix.  This is used when generating common client code
+ #       such as in TEMPLATE_common.c.
+ #     - initiatorWaits: True if the caller waits for a response.  In this case some stack
+ #       space and time can be saved by using the caller's buffer directly instead of creating
+ #       a copy.
+ #}
+{%- macro UnpackInputs(parameterList,useBaseName=False,initiatorWaits=False) %}
+    {%- for parameter in parameterList
+        if parameter is InParameter
+           or parameter is StringParameter
+           or parameter is ArrayParameter %}
+    {%- if args.localService and initiatorWaits and (parameter is StringParameter or
+                                                  parameter is OptimizableArray) %}
+    {%- if parameter is not InParameter %}
+    if (!_skip_{{parameter|FormatParameterName}})
+    {
+    {%- endif %}
+        if (!le_pack_UnpackSizePointerTuple( &_msgBufPtr,
+                                        &{{parameter.name}}Size,
+                                       (void**)&{{parameter|FormatParameterName}}, NULL ))
+        {
+            {{- caller() }}
+        }
+
+        {%- if parameter is StringParameter %}
+        if ({{parameter.name}}Size >= UINT32_MAX)
+        {
+            {{parameter.name}}Size = UINT32_MAX;
+        }
+        else
+        {
+            {{parameter.name}}Size++;
+        }
+        {%- endif %}
+    {%- if parameter is not InParameter %}
+    }
+    {%- endif %}
+    {%- elif parameter is not InParameter %}
+    if (!_skip_{{parameter|FormatParameterName}})
+    {
+        if (!le_pack_UnpackSize( &_msgBufPtr,
+                                 &{{parameter.name}}Size ))
+        {
+            {{- caller() }}
+        }
+        if ( ({{parameter.name}}Size > {{parameter.maxCount}}){% if parameter is StringParameter %} &&
+             ({{parameter.name}}Size < UINT32_MAX){% endif %} )
+        {
+            LE_DEBUG("Adjusting {{parameter.name}}Size from %" PRIuS " to {{parameter.maxCount}}",
+                 {#- #} {{parameter.name}}Size);
+            {{parameter.name}}Size = {{parameter.maxCount}};
+        }
+        {%- if parameter is StringParameter %}
+        if ({{parameter.name}}Size >= UINT32_MAX)
+        {
+            {{parameter.name}}Size = UINT32_MAX;
+        }
+        else
+        {
+            {{parameter.name}}Size++;
+        }
+        {%- endif %}
+    }
+    {%- elif parameter is StringParameter %}
+    if (!le_pack_UnpackString( &_msgBufPtr,
+                               {{parameter|FormatParameterName}},
+                               sizeof({{parameter|FormatParameterName}}),
+                               {{parameter.maxCount}} ))
+    {
+        {{- caller() }}
+    }
+    {%- elif parameter is ArrayParameter %}
+        {%- if parameter.apiType is StructType %}
+            LE_PACK_UNPACKSTRUCTARRAY( &_msgBufPtr,
+                         {{parameter|FormatParameterName}}, &{{parameter.name}}Size,
+                         {{parameter.maxCount}},
+                         {{parameter.apiType|UnpackFunction}},
+                         &{{parameter.name}}Result );
+        {%- elif parameter is ByteStringArray %}
+            {{parameter.name}}Result = le_pack_UnpackByteString( &_msgBufPtr,
+                {{parameter|FormatParameterName}}, &{{parameter.name}}Size, {{parameter.maxCount}});
+        {%- elif parameter.apiType is ReferenceType %}
+            LE_PACK_UNPACKTAGGEDARRAY( &_msgBufPtr,
+                         {{parameter|FormatParameterName}}, &{{parameter.name}}Size,
+                         {{parameter.maxCount}},
+                         {{parameter.apiType|UnpackFunction}},
+                         &{{parameter.name}}Result );
+        {%- else %}
+            LE_PACK_UNPACKARRAY( &_msgBufPtr,
+                         {{parameter|FormatParameterName}}, &{{parameter.name}}Size,
+                         {{parameter.maxCount}},
+                         {{parameter.apiType|UnpackFunction}},
+                         &{{parameter.name}}Result );
+        {%- endif %}
+    if (!{{parameter.name}}Result)
+    {
+        {{- caller() }}
+    }
+    {%- elif parameter.apiType is HandlerType %}
+    if (!le_pack_UnpackReference( &_msgBufPtr, &contextPtr, NULL ))
+    {
+        {{- caller() }}
+    }
+    {%- elif parameter.apiType is BasicType and parameter.apiType.name == 'file' %}
+    {{parameter.name|DecorateName}} = le_msg_GetFd(_msgRef);
+    {%- elif parameter.apiType is ReferenceType %}
+    if (!{{parameter.apiType|UnpackFunction}}( &_msgBufPtr,
+                                               &{{parameter.name|DecorateName}}, NULL ))
+    {
+        {{- caller() }}
+    }
+    {%- else %}
+    if (!{{parameter.apiType|UnpackFunction}}( &_msgBufPtr,
+                                               &{{parameter.name|DecorateName}} ))
+    {
+        {{- caller() }}
+    }
+    {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{%- macro PackOutputs(parameterList,initiatorWaits=False) %}
+    {%- for parameter in parameterList if parameter is OutParameter %}
+    {%- if args.localService and initiatorWaits and parameter is StringParameter %}
+
+    /* Pack parameter marker for RPC for parameter {{parameter.name}} if needed */
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT(le_pack_PackSemanticTag( &_msgBufPtr, LE_PACK_OUT_STRING_RESPONSE));
+    }
+    {%- elif args.localService and initiatorWaits and parameter is OptimizableArray %}
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT(le_pack_PackTaggedSize( &_msgBufPtr,
+                                          {{parameter|GetParameterCount}},
+                                          LE_PACK_OUT_BYTE_STR_RESPONSE ));
+    }
+    /* No data packing needed for {{parameter.name}} */
+    {%- elif parameter is StringParameter %}
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT(le_pack_PackString( &_msgBufPtr,
+                                      {{parameter|FormatParameterName}}, {{parameter.maxCount}} ));
+    }
+    {%- elif parameter is ArrayParameter %}
+    if ({{parameter|FormatParameterName}})
+    {
+        bool {{parameter.name}}Result;
+        {%- if parameter.apiType is StructType %}
+            LE_PACK_PACKSTRUCTARRAY( &_msgBufPtr,
+                           {{parameter|FormatParameterName}}, {{parameter|GetParameterCount}},
+                           {{parameter.maxCount}}, {{parameter.apiType|PackFunction}},
+                           &{{parameter.name}}Result );
+        {%- elif parameter is ByteStringArray %}
+            {{parameter.name}}Result = le_pack_PackByteString( &_msgBufPtr,
+                                        {{parameter|FormatParameterName}},
+                                        {{parameter|GetParameterCount}});
+        {%- else %}
+            LE_PACK_PACKARRAY( &_msgBufPtr,
+                           {{parameter|FormatParameterName}}, {{parameter|GetParameterCount}},
+                           {{parameter.maxCount}}, {{parameter.apiType|PackFunction}},
+                           &{{parameter.name}}Result );
+        {%- endif %}
+        LE_ASSERT({{parameter.name}}Result);
+    }
+    {%- elif parameter.apiType is BasicType and parameter.apiType.name == 'file' %}
+    if ({{parameter|FormatParameterName}})
+    {
+        le_msg_SetFd(_msgRef, *{{parameter|FormatParameterName}});
+    }
+    {%- elif parameter.apiType is StructType %}
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT({{parameter.apiType|PackFunction}}( &_msgBufPtr,
+                                                      {{parameter|FormatParameterName}} ));
+    }
+    {%- else %}
+    if ({{parameter|FormatParameterName}})
+    {
+        LE_ASSERT({{parameter.apiType|PackFunction}}( &_msgBufPtr,
+                                                      *{{parameter|FormatParameterName}} ));
+    }
+    {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
+{#-
+ # Unpack all output parameters from this function into buffers provided by the caller.
+ #
+ # Params:
+ #     - parameterList: List of all parameters to the API function
+ #     - initiatorWaits: True if the caller waits for a response.  In this case some stack
+ #       space and time can be saved by using the caller's buffer directly instead of creating
+ #       a copy.
+ #}
+{%- macro UnpackOutputs(parameterList,initiatorWaits=False) %}
+    {%- for parameter in parameterList if parameter is OutParameter %}
+    {%- if args.localService and initiatorWaits and parameter is StringParameter %}
+
+    /* Pack parameter marker for RPC for parameter {{parameter.name}} if needed */
+    if ({{parameter|FormatParameterName}} &&
+        !le_pack_CheckSemanticTag( &_msgBufPtr, LE_PACK_OUT_STRING_RESPONSE))
+    {
+        {{- caller() }}
+    }
+    {%- elif args.localService and initiatorWaits and parameter is OptimizableArray %}
+    if ({{parameter|FormatParameterName}})
+    {
+        if (!le_pack_UnpackTaggedSize( &_msgBufPtr,
+                                       {{parameter|GetParameterCountPtr}},
+                                       LE_PACK_OUT_BYTE_STR_RESPONSE) )
+        {
+            {{- caller() }}
+        }
+    }
+    /* No data unpacking needed for {{parameter.name}} */
+    {%- elif parameter is StringParameter %}
+    if ({{parameter|FormatParameterName}} &&
+        (!le_pack_UnpackString( &_msgBufPtr,
+                               {{parameter|FormatParameterName}},
+                               {{parameter.name}}Size,
+                               {{parameter.maxCount}} )))
+    {
+        {{- caller() }}
+    }
+    {%- elif parameter is ArrayParameter %}
+    bool {{parameter.name}}Result;
+    if ({{parameter|FormatParameterName}})
+    {
+        {%- if parameter.apiType is StructType %}
+            LE_PACK_UNPACKSTRUCTARRAY( &_msgBufPtr,
+                             {{parameter|FormatParameterName}}, {{parameter|GetParameterCountPtr}},
+                             {{parameter.maxCount}}, {{parameter.apiType|UnpackFunction}},
+                             &{{parameter.name}}Result );
+        {%- elif parameter is ByteStringArray %}
+            {{parameter.name}}Result = le_pack_UnpackByteString( &_msgBufPtr,
+                                                                {{parameter|FormatParameterName}},
+                                                                {{parameter|GetParameterCountPtr}},
+                                                                {{parameter.maxCount}});
+        {%- elif parameter.apiType is ReferenceType %}
+            LE_PACK_UNPACKTAGGEDARRAY( &_msgBufPtr,
+                         {{parameter|FormatParameterName}}, &{{parameter.name}}Size,
+                         {{parameter.maxCount}},
+                         {{parameter.apiType|UnpackFunction}},
+                         &{{parameter.name}}Result );
+        {%- else %}
+            LE_PACK_UNPACKARRAY( &_msgBufPtr,
+                             {{parameter|FormatParameterName}}, {{parameter|GetParameterCountPtr}},
+                             {{parameter.maxCount}}, {{parameter.apiType|UnpackFunction}},
+                             &{{parameter.name}}Result );
+        {%- endif %}
+        if (!{{parameter.name}}Result)
+        {
+            {{- caller() }}
+        }
+    }
+    {%- elif parameter.apiType is BasicType and parameter.apiType.name == 'file' %}
+    if ({{parameter|FormatParameterName}})
+    {
+        *{{parameter|FormatParameterName}} = le_msg_GetFd(_responseMsgRef);
+    }
+    {%- elif parameter.apiType is ReferenceType %}
+    if ({{parameter|FormatParameterName}} &&
+        (!{{parameter.apiType|UnpackFunction}}( &_msgBufPtr,
+                                               {{parameter|FormatParameterPtr}}, NULL )))
+    {
+        {{- caller() }}
+    }
+    {%- else %}
+    if ({{parameter|FormatParameterName}} &&
+        (!{{parameter.apiType|UnpackFunction}}( &_msgBufPtr,
+                                               {{parameter|FormatParameterPtr}} )))
+    {
+        {{- caller() }}
+    }
+    {%- endif %}
+    {%- endfor %}
+{% endmacro %}

@@ -1,0 +1,90 @@
+# Build Products
+/build
+/toolchains
+/bin
+
+# Configuration
+.config*
+
+# Generated files
+/Documentation*
+/releases
+/version
+/sources.md5
+/delivery
+/platformAdaptor
+*proprietary
+doxygen.*.log
+doxygen.*.err
+_build_*
+/system.sdef
+binaries
+/framework/tools/ifgen/cache
+server.pem
+*.gcno
+
+# Update pack files
+*.update
+
+# Binary app files
+*.*.app
+
+# Vim
+*.swp
+*.swo
+*.swn
+
+# Visual Studio Code
+.vscode
+
+# Emacs
+*~
+\#*\#
+
+# Eclipse / Developer Studio
+.cproject
+.project
+.settings
+package.properties
+wmnew.opt
+
+# KDev4
+*.kdev4
+
+# Python
+*.pyc
+/Debug
+.pytest_cache
+__pycache__
+
+# Target files backup
+targetFiles/*/backup_*
+
+# Injected target defs
+targetDefs.extra
+modules/*
+!modules/KConfig
+docManagement
+
+# 3rd Party content
+3rdParty/*
+
+# Apps
+apps/platformServices/airVantageConnector/
+apps/leTP
+apps/sample/dataHub/
+apps/sample/voiceCallApp/
+apps/sample/sensorFramework/
+
+# Tools
+framework/tools/imgdiff/
+
+# Tests
+.cache
+
+# nodejs ignores:
+node_modules
+package-lock.json
+
+# Linker report tool for memory analysis
+tools/linkerReport

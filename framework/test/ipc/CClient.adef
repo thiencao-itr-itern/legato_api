@@ -1,0 +1,25 @@
+/*
+ * Copyright (C) Sierra Wireless Inc.
+ */
+
+start: manual
+
+executables:
+{
+    client = ( CClient )
+}
+
+processes:
+{
+    run:
+    {
+        ( client )
+    }
+
+    maxStackBytes: 8192
+}
+
+extern:
+{
+    client.CClient.ipcTest
+}

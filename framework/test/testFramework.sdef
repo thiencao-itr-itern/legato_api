@@ -1,0 +1,73 @@
+/*
+ * Framework test system -- contains all test apps needed to test framework functionality.
+ */
+
+#include "$LEGATO_ROOT/legatoTargetConfig.sinc"
+
+interfaceSearch:
+{
+    $CURDIR/ipc/interfaces
+    $LEGATO_ROOT/interfaces/atServices
+    $LEGATO_ROOT/interfaces
+}
+
+apps:
+{
+    /*
+     * Test applications
+     */
+    hex/test_Hex
+    pack/test_Pack
+    pathIter/test_PathIter
+#if ${LE_CONFIG_LINUX} = y
+#else
+    pipe/test_Pipe
+#endif
+
+    memPool/test_MemPool
+    hashMap/test_HashMap
+    lists/test_Lists
+#if ${LE_CONFIG_RTOS} = y
+#else
+    clock/test_Clock
+#endif
+    thread/test_Thread
+    eventLoop/test_EventLoop
+    timer/test_Timer
+    semaphore/test_Semaphore
+#if ${LE_CONFIG_NETWORK} = y
+    fdMonitor/test_FdMonitorSocket
+#endif
+    fdMonitor/test_FdMonitorFifo
+    ipc/test_IpcC2C
+#if ${LE_CONFIG_LINUX} = y
+    // FIXME: test is broken: ipc/test_IpcC2CDirect
+#endif
+    ipc/test_IpcC2CAsync
+    ipc/test_IpcCRelay
+#if ${LE_CONFIG_LINUX} = y
+    // Bindings to non-existant interfaces aren't supported on RTOS.  Remove the binding instead.
+    ipc/test_Optional1
+#endif
+    ipc/test_Optional2
+#if ${LE_CONFIG_FILESYSTEM} = y
+    fs/test_Fs
+#endif
+    crc/test_Crc
+    fd/test_Fd
+    issues/test_LE_11195
+    json/test_Json
+    rand/test_Rand
+
+    /*
+     * Helper applications assocated with python tests
+     */
+    multi-app/helloWorld
+    log/logTester
+    issues/LE_2322
+}
+
+cflags:
+{
+    -DDUT_TARGET_${LEGATO_TARGET_SYMBOL}
+}

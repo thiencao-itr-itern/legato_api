@@ -1,0 +1,214 @@
+//--------------------------------------------------------------------------------------------------
+/**
+ * @page c_bootReason Boot Reason Query
+ *
+ * @ref le_bootReason_interface.h "API Reference"
+ *
+ * <HR>
+ *
+ * This API can be used to determine the reason for the last OS boot when using @ref c_ulpm
+ * (e.g., power on due to pre-configured time setty or GPIO toggled externally).
+ *
+ * Boot may occur due to exit from ultra low power mode or press on Power button. Exit from low
+ * power state may occur through various sources (e.g., GPIO pins or timers that are specific to the
+ * device hardware).
+ *
+ * @section bootReason_example Sample Code
+ *
+ * This C code sample sows an API calling sequence to get boot-reason:
+ *
+ *  @code
+ *
+ *  void CheckMDMBootReason
+ *  (
+ *      void
+ *  )
+ *  {
+ *      if (le_bootReason_WasTimer())
+ *      {
+ *           LE_INFO("Timer boot");
+ *      }
+ *      else if (le_bootReason_WasGpio(<gpioNum>))
+ *      {
+ *           LE_INFO("GPIO<gpioNum> boot");
+ *      }
+ *      else
+ *      {
+ *          LE_INFO("Power-on");
+ *      }
+ *  }
+ *
+ *  @endcode
+ *
+ * <HR>
+ *
+ * Copyright (C) Sierra Wireless Inc.
+ */
+//--------------------------------------------------------------------------------------------------
+
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * @file le_bootReason_interface.h
+ *
+ * Legato @ref c_bootReason include file.
+ *
+ * Copyright (C) Sierra Wireless Inc.
+ */
+//--------------------------------------------------------------------------------------------------
+
+DEFINE MAX_GPIO_ADC_COUNT = 100;
+DEFINE MAX_GPIO_NAME_BYTES = 10;
+DEFINE MAX_ADC_NAME_BYTES = 10;
+DEFINE MAX_GPIO_STATUS_BLOCK_BYTES = 41;
+DEFINE MAX_ADC_STATUS_BLOCK_BYTES = 72;
+DEFINE MAX_ADC_INTERVAL_BYTES = 24;
+DEFINE MAX_TIMER_STATUS_BLOCK_BYTES = 37;
+DEFINE MAX_SHUTDOWN_STRATEGY_BLOCK_BYTES = 40;
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Checks whether boot-reason was timer expiry.
+ *
+ * @return
+ *      - TRUE if boot-reason was timer expiry.
+ *      - FALSE otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION bool WasTimer();
+
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Checks whether boot-reason was specific gpio change. GPIO number is specified in parameter.
+ *
+ * @return
+ *      - TRUE if boot-reason was specified gpio change.
+ *      - FALSE otherwise.
+ *
+ * @note The process exits if invalid gpio number is passed.  Check corresponding device documents
+ * for valid list of gpio.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION bool WasGpio
+(
+    uint32 gpioNum  IN      ///< GPIO number.
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Checks whether boot reason was due to the specified ADC having a reading above or below the
+ * configured limits.
+ *
+ * @return
+ *      true if boot reason was due to the given ADC or false otherwise.
+ *
+ * @note
+ *      The process exits if an invalid ADC number is passed. Check corresponding device documents
+ *      for valid list of ADC numbers.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION bool WasAdc
+(
+    uint32 adcNum IN        ///< ADC number
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the number of GPIOs that are specified in the system.
+ *
+ * @return
+ *      LE_OK if we successfully get all the GPIOs and place them in the array.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetGpioCount
+(
+    uint8 gpioArray[MAX_GPIO_ADC_COUNT] OUT
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the information for a specific GPIO and place all the information into the buffer.
+ *
+ * @return
+ *      LE_OK if we successfully get all the information.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetGpioInfo
+(
+    string buf[MAX_GPIO_STATUS_BLOCK_BYTES] OUT,
+    string gpio[MAX_GPIO_NAME_BYTES] IN
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the number of ADCs that are specified in the system.
+ *
+ * @return
+ *      LE_OK if we successfully get all the ADCs and place them in the array.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetAdcCount
+(
+    uint8 adcArray[MAX_GPIO_ADC_COUNT] OUT
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the information for a specific ADC and place all the information into the buffer.
+ *
+ * @return
+ *      LE_OK if we successfully get all the information.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetAdcInfo
+(
+    string buf[MAX_ADC_STATUS_BLOCK_BYTES] OUT,
+    string adc[MAX_ADC_NAME_BYTES] IN
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the information about ADC interval and place all the information into the buffer.
+ *
+ * @return
+ *      LE_OK if we successfully get all the information.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetAdcInterval
+(
+    string buf[MAX_ADC_INTERVAL_BYTES] OUT
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the information about timer and place all the information into the buffer.
+ *
+ * @return
+ *      LE_OK if we successfully get all the information.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetTimerInfo
+(
+    string buf[MAX_TIMER_STATUS_BLOCK_BYTES] OUT
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
+ * Get the information about shutdown strategy and place all the information into the buffer.
+ *
+ * @return
+ *      LE_OK if we successfully get all the information.
+ *      LE_FAULT otherwise.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t GetShutdownStrategy
+(
+    string buf[MAX_SHUTDOWN_STRATEGY_BLOCK_BYTES] OUT
+);

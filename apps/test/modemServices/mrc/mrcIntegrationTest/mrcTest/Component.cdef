@@ -1,0 +1,13 @@
+sources:
+{
+    le_mrcTest.c
+}
+
+requires:
+{
+    api:
+    {
+        modemServices/le_mrc.api
+        modemServices/le_sim.api
+    }
+}

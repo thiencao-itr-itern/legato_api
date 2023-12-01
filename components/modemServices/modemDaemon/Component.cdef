@@ -1,0 +1,114 @@
+requires:
+{
+    api:
+    {
+        le_limit.api  [types-only]
+    #if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+        le_cfg.api
+    #endif
+
+    #if ${MK_CONFIG_MODEMSERVICE_NO_POWERMANAGER} = ""
+        le_pm.api
+    #endif
+        le_appInfo.api
+    }
+
+    component:
+    {
+        ${LEGATO_ROOT}/components/watchdogChain
+    }
+}
+
+provides:
+{
+    api:
+    {
+        modemServices/le_info.api
+        modemServices/le_sms.api
+        modemServices/le_mrc.api
+        modemServices/le_sim.api
+        modemServices/le_mdc.api
+        modemServices/le_ips.api
+        modemServices/le_temp.api
+        modemServices/le_riPin.api
+        modemServices/le_adc.api
+    #if ${MK_CONFIG_MODEMSERVICE_NO_LPT} = ""
+        modemServices/le_lpt.api
+    #endif
+    #if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+        modemServices/le_mcc.api
+        modemServices/le_ecall.api
+        modemServices/le_antenna.api
+        modemServices/le_rtc.api
+        modemServices/le_mdmCfg.api
+    #endif
+    }
+}
+
+sources:
+{
+    le_info.c
+    le_mdc.c
+    le_mrc.c
+    le_ms.c
+    le_sim.c
+    le_sms.c
+    le_ips.c
+    le_temp.c
+    le_adc.c
+    le_riPin.c
+    sysResets.c
+
+#if ${MK_CONFIG_MODEMSERVICE_NO_LPT} = ""
+    le_lpt.c
+#endif
+
+#if ${MK_CONFIG_SMS_LIGHT} = y
+    le_sms_stub.c
+#else
+    smsPdu.c
+    cdmaPdu.c
+#endif
+
+#if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+    le_mcc.c
+    asn1Msd.c
+    le_ecall.c
+    le_antenna.c
+    le_rtc.c
+    le_mdmCfg.c
+#endif
+}
+
+cflags:
+{
+    -I$CURDIR
+    -I$LEGATO_ROOT/components/modemServices/platformAdaptor/inc
+    -I$LEGATO_ROOT/components/cfgEntries
+    -I${LEGATO_ROOT}/components/watchdogChain
+    -I$LEGATO_BUILD/framework/libjansson/include
+}
+
+#if ${MK_CONFIG_MODEMSERVICE_NO_JANSSON} = ""
+ldflags:
+{
+    -ljansson
+}
+#endif
+
+requires:
+{
+    component:
+    {
+#if ${LE_CONFIG_LINUX} = y
+        $LEGATO_MODEM_PA_DEFAULT
+#endif
+        $LEGATO_MODEM_PA
+
+#if ${MK_CONFIG_MODEMSERVICE_SIMPLE} = ""
+        $LEGATO_MODEM_PA_ECALL_DEFAULT
+        $LEGATO_MODEM_PA_ECALL
+#endif
+        $PLATFORM_AT_CLIENT_COMPONENT
+    }
+}

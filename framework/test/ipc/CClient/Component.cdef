@@ -1,0 +1,22 @@
+/*
+ * Copyright (C) Sierra Wireless Inc.
+ */
+
+requires:
+{
+    api:
+    {
+        ipcTest.api    [manual-start]
+    }
+}
+
+cflags:
+{
+    -I$CURDIR/../utils
+}
+
+sources:
+{
+    cclient.c
+    ../utils/utils.c
+}

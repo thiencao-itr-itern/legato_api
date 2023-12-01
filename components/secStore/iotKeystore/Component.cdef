@@ -1,0 +1,44 @@
+sources:
+{
+    iksKeyManagement.c
+    iksAesMilenage.c
+    iksAesGcm.c
+    iksHmac.c
+    iksAesCbc.c
+    iksAesCmac.c
+    iksRsa.c
+    iksEcc.c
+}
+
+cflags:
+{
+    -I$CURDIR/../platformAdaptor/inc
+    -I$LEGATO_ROOT/components/secStore/secStoreDaemon
+}
+
+requires:
+{
+    component:
+    {
+#if ${LE_CONFIG_ENABLE_IOT_KEYSTORE_API} = y
+        $LEGATO_IOT_KEYSTORE_PA
+#else
+        $LEGATO_IOT_KEYSTORE_PA_DEFAULT
+#endif
+    }
+}
+
+provides:
+{
+    api:
+    {
+        iotKeystore/le_iks.api
+        iotKeystore/le_iks_aesMilenage.api
+        iotKeystore/le_iks_aesGcm.api
+        iotKeystore/le_iks_hmac.api
+        iotKeystore/le_iks_aesCbc.api
+        iotKeystore/le_iks_aesCmac.api
+        iotKeystore/le_iks_rsa.api
+        iotKeystore/le_iks_ecc.api
+    }
+}

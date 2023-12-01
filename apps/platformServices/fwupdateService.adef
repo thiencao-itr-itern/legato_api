@@ -1,0 +1,41 @@
+sandboxed: false
+
+executables:
+{
+    fwupdateDaemon = ( $LEGATO_ROOT/components/fwupdate/fwupdateDaemon )
+}
+
+processes:
+{
+    run:
+    {
+        (fwupdateDaemon)
+    }
+
+    faultAction: restart
+#if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+    maxWatchdogTimeout: 960000
+#else
+    watchdogTimeout: never
+#endif
+    maxFileBytes: 2000K
+}
+
+bindings:
+{
+#if ${LE_CONFIG_LINUX} = y
+    fwupdateDaemon.watchdogChain.le_wdog -> <root>.le_wdog
+    fwupdateDaemon.fwupdateDaemon.le_pm -> powerMgr.le_pm
+#endif
+}
+
+extern:
+{
+    fwupdateDaemon.fwupdateDaemon.le_fwupdate
+#if ${LE_CONFIG_LINUX} = y
+    fwupdateDaemon.fwupdateDaemon.le_dualsys
+    fwupdateDaemon.fwupdateDaemon.le_flash
+#endif
+    fwupdateDaemon.watchdogChain.le_wdog
+}
+

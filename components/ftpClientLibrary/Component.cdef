@@ -1,0 +1,24 @@
+sources:
+{
+    src/le_ftpClientLib.c
+    ftpClient.c
+}
+
+cflags:
+{
+   -I${LEGATO_ROOT}/components/socketLibrary
+}
+
+requires:
+{
+    component:
+    {
+        $LEGATO_ROOT/components/socketLibrary
+    }
+
+    api:
+    {
+        modemServices/le_mdc.api
+    }
+}
+

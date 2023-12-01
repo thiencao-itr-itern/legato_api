@@ -1,0 +1,32 @@
+start: manual
+
+executables:
+{
+    pingWatchdog  = ( pingComponent )
+    sleepWatchdog = ( sleepComponent )
+}
+
+processes:
+{
+    run:
+    {
+        ( pingWatchdog )
+        ( sleepWatchdog )
+    }
+
+    watchdogTimeout: 5000
+}
+
+bindings:
+{
+#if ${LE_CONFIG_LINUX} = y
+    pingWatchdog.watchdogChain.le_wdog -> <root>.le_wdog
+    sleepWatchdog.watchdogChain.le_wdog -> <root>.le_wdog
+#elif ${LE_CONFIG_RTOS} = y
+    #if ${LE_CONFIG_SERVICES_WATCHDOG} = y
+    pingWatchdog.watchdogChain.le_wdog -> watchdog.le_wdog
+    sleepWatchdog.watchdogChain.le_wdog -> watchdog.le_wdog
+    #endif
+#endif
+    pingWatchdog.pingComponent.sleep -> sleepWatchdog.sleepComponent.sleep
+}

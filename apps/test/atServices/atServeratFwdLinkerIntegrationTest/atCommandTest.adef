@@ -1,0 +1,24 @@
+start: manual
+
+sandboxed:false
+
+executables:
+{
+    atCommandTest = ( atGenericComponent )
+}
+
+processes:
+{
+    run:
+    {
+        ( atCommandTest )
+    }
+}
+
+bindings:
+{
+    atCommandTest.atGenericComponent.le_atServer -> atService.le_atServer
+    atCommandTest.atGenericComponent.le_port -> portService.le_port
+    atCommandTest.atServerUtil.le_atServer -> atService.le_atServer
+    atCommandTest.atServerUtil.le_port -> portService.le_port
+}

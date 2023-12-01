@@ -1,0 +1,11 @@
+requires:
+{
+    api:
+    {
+        le_wdog.api
+    }
+}
+sources:
+{
+    main.c
+}

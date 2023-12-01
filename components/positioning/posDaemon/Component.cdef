@@ -1,0 +1,48 @@
+requires:
+{
+    api:
+    {
+    #if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+        le_cfg.api
+    #endif
+    }
+
+    component:
+    {
+        $LEGATO_ROOT/components/watchdogChain
+    }
+}
+
+provides:
+{
+    api:
+    {
+        positioning/le_gnss.api
+        positioning/le_pos.api
+        positioning/le_posCtrl.api
+    }
+}
+
+sources:
+{
+    le_gnss.c
+    le_pos.c
+}
+
+cflags:
+{
+    -I$CURDIR/../platformAdaptor/inc
+    -I$CURDIR/../../cfgEntries
+    -I$LEGATO_ROOT/components/watchdogChain
+}
+
+requires:
+{
+    component:
+    {
+    #if ${LE_CONFIG_LINUX} = y
+        $LEGATO_GNSS_PA_DEFAULT
+    #endif
+        $LEGATO_GNSS_PA
+    }
+}

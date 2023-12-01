@@ -1,0 +1,15 @@
+requires:
+{
+    api:
+    {
+        atServices/le_atServer.api         [types-only]
+        atServices/le_atClient.api         [types-only]
+    }
+}
+
+sources:
+{
+    server.c
+    main.c
+    bridgeTest.c
+}

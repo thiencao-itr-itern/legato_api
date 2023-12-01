@@ -1,0 +1,24 @@
+requires:
+{
+    component:
+    {
+        ${LEGATO_ROOT}/apps/proprietary/atSwi/src/atServerUtil
+    }
+    api:
+    {
+        atServices/le_atServer.api
+        portService/le_port.api
+    }
+}
+
+cflags:
+{
+    -I${LEGATO_ROOT}/apps/proprietary/atSwi/src/atServerUtil
+    -I${CURDIR}/handlers
+}
+
+sources:
+{
+    atGeneric.c
+    handlers/handlers.c
+}

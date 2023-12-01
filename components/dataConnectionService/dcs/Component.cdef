@@ -1,0 +1,41 @@
+provides:
+{
+    api:
+    {
+        le_dcs = $LEGATO_ROOT/interfaces/le_dcs.api
+    }
+}
+
+requires:
+{
+    api:
+    {
+        modemServices/le_mdmDefs.api [types-only]
+        modemServices/le_mdc.api
+        modemServices/le_mrc.api
+    #if ${LE_CONFIG_ENABLE_CONFIG_TREE} = y
+        le_cfg.api
+    #endif
+        le_appInfo.api
+    }
+}
+
+sources:
+{
+    dcs.c
+    dcs_utils.c
+    dcs_db.c
+    dcsTech.c
+}
+
+
+cflags:
+{
+    -I$LEGATO_ROOT/components/modemServices/platformAdaptor/inc
+    -I$LEGATO_ROOT/components/dataConnectionService/platformAdaptor/inc
+    -I $LEGATO_ROOT/components/dataConnectionService/dcsDaemon
+    -I $LEGATO_ROOT/components/dataConnectionService/dcsNet
+    -I $LEGATO_ROOT/components/dataConnectionService/dcsCellular
+    -I $LEGATO_ROOT/components/dataConnectionService/dcsWifi
+    -I $LEGATO_ROOT/components/dataConnectionService/dcsEthernet
+}

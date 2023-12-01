@@ -1,0 +1,53 @@
+sandboxed: false
+
+bundles:
+{
+    file:
+    {
+        // Only package these debug tools if they are provided by the toolchain.
+        #if file_exists($LEGATO_SYSROOT/usr/bin/gdbserver)
+            [rx] $LEGATO_SYSROOT/usr/bin/gdbserver          /bin/gdbserver
+        #endif
+        #if file_exists($LEGATO_SYSROOT/usr/bin/strace)
+            [rx] $LEGATO_SYSROOT/usr/bin/strace             /bin/strace
+        #endif
+        #if file_exists($LEGATO_SYSROOT/usr/sbin/tcpdump)
+            [rx] $LEGATO_SYSROOT/usr/sbin/tcpdump           /sbin/tcpdump
+        #endif
+        #if file_exists($LEGATO_SYSROOT/usr/bin/usb-devices)
+            [rx] $LEGATO_SYSROOT/usr/bin/usb-devices        /bin/usb-devices
+        #endif
+        #if file_exists($LEGATO_SYSROOT/usr/bin/lsusb)
+            [rx] $LEGATO_SYSROOT/usr/bin/lsusb              /bin/lsusb
+        #endif
+        #if file_exists($LEGATO_SYSROOT/usr/sbin/lsof)
+            [rx] $LEGATO_SYSROOT/usr/sbin/lsof              /sbin/lsof
+        #endif
+    }
+}
+
+components:
+{
+    $LEGATO_ROOT/components/3rdParty/iperf
+}
+
+executables:
+{
+    devMode = ( $LEGATO_ROOT/components/devMode/devMode )
+}
+
+processes:
+{
+    run:
+    {
+        ( devMode )
+    }
+}
+
+bindings:
+{
+    devMode.devMode.le_pm -> powerMgr.le_pm
+    devMode.devMode.le_updateCtrl -> <root>.le_updateCtrl
+    devMode.devMode.le_instStat -> <root>.le_instStat
+    devMode.devMode.le_framework -> <root>.le_framework
+}
