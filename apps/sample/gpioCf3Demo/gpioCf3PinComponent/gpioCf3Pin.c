@@ -12,13 +12,13 @@
 #include "legato.h"
 #include "interfaces.h"
 
-// static int Pin22 = 22;
+static int Pin22 = 22;
 
-// static void Pin22ChangeCallback(bool state, void *ctx){
-//     LE_INFO("State change %s", state?"TRUE":"FALSE");
+static void Pin22ChangeCallback(bool state, void *ctx){
+    LE_INFO("State change %s", state?"TRUE":"FALSE");
 
-//     LE_INFO("Context pointer came back as %d", *(int *)ctx);
-// }
+    LE_INFO("Context pointer came back as %d", *(int *)ctx);
+}
 
 // -------------------------------------------------------------------------------------------------
 /**
@@ -55,23 +55,23 @@
  *  Pin-per-service GPIO pin22 as example
  */
 // -------------------------------------------------------------------------------------------------
-// static void Pin22GpioSignal()
-// {
-//     bool value = false;
-//     le_gpioPin22_SetInput(LE_GPIOPIN22_ACTIVE_LOW);
-//     value = le_gpioPin22_Read();
-//     LE_INFO("Pin22 read active: %d", value);
+static void Pin22GpioSignal()
+{
+    bool value = false;
+    le_gpioPin22_SetInput(LE_GPIOPIN22_ACTIVE_LOW);
+    value = le_gpioPin22_Read();
+    LE_INFO("Pin22 read active: %d", value);
 
-//     le_gpioPin22_ChangeEventHandlerRef_t ref = le_gpioPin22_AddChangeEventHandler(LE_GPIOPIN22_EDGE_FALLING, Pin22ChangeCallback, &Pin22, 0);
+    le_gpioPin22_ChangeEventHandlerRef_t ref = le_gpioPin22_AddChangeEventHandler(LE_GPIOPIN22_EDGE_FALLING, Pin22ChangeCallback, &Pin22, 0);
 
-//     // Change the edge setting
-//     le_gpioPin22_SetEdgeSense(LE_GPIOPIN22_EDGE_BOTH);
-//     le_gpioPin22_DisableEdgeSense();
-//     le_gpioPin22_SetEdgeSense(LE_GPIOPIN22_EDGE_RISING);
+    // Change the edge setting
+    le_gpioPin22_SetEdgeSense(LE_GPIOPIN22_EDGE_BOTH);
+    le_gpioPin22_DisableEdgeSense();
+    le_gpioPin22_SetEdgeSense(LE_GPIOPIN22_EDGE_RISING);
 
-//     // Remove the handler
-//     le_gpioPin22_RemoveChangeEventHandler(ref);
-// }
+    // Remove the handler
+    le_gpioPin22_RemoveChangeEventHandler(ref);
+}
 
 // static void PinsReadConfig()
 // {
@@ -135,7 +135,7 @@ COMPONENT_INIT
     LE_INFO("This is sample gpioctl Legato CF3 GPIO app by using le_gpio.api\n");
 
    // Pin21GpioSignal();
-  //  Pin22GpioSignal();
+    Pin22GpioSignal();
 
    // PinsReadConfig();
 
@@ -168,14 +168,14 @@ COMPONENT_INIT
     // isout = le_gpioPin21_IsOutput();
     // LE_INFO("Is out: %d", isout ? 1 : 0);
 
-    bool is_active;
+    // bool is_active;
 
-    le_gpioPin21_Activate();
-    is_active = le_gpioPin21_IsActive();
-    LE_INFO("Is active: %d", is_active);
+    // le_gpioPin21_Activate();
+    // is_active = le_gpioPin21_IsActive();
+    // LE_INFO("Is active: %d", is_active);
 
-    is_active = le_gpioPin21_Deactivate();
-    LE_INFO("Is active: %d", is_active);
+    // is_active = le_gpioPin21_Deactivate();
+    // LE_INFO("Is active: %d", is_active);
 
     return;
 }
